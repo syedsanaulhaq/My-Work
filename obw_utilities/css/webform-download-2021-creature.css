@@ -1,0 +1,16 @@
+#creature-thanks-message {
+  width: 300px;
+  height: 200px;
+}
+
+.story-download-form.active {
+  text-align: center;
+}
+
+.creature-notify {
+  color: orange;
+}
+
+#edit-would-you-like-to-receive-stories-of-good-like-this-one-from-our--wrapper {
+  text-align: left;
+}

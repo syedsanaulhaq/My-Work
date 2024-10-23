@@ -1,0 +1,26 @@
+.page-zoom-login {
+  margin: 100px 0 90px 0;
+}
+.page-zoom-login h1 {
+  margin: 0;
+  color: #191919;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 36px;
+}
+.page-zoom-login #open-signup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 250ms ease;
+  border-radius: 4px;
+  background: #D24F1D;
+  height: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #fff;
+  max-width: 165px;
+  margin: 0 auto;
+  width: 100%;
+}

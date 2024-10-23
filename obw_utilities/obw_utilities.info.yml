@@ -1,0 +1,5 @@
+name: 'Our Better World Utilities'
+type: module
+description: 'Our Better World Utilities Functions'
+core_version_requirement: ^8 || ^9
+package: 'OBW'

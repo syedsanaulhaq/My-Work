@@ -1,0 +1,2317 @@
+<?php
+
+/**
+ * @file
+ * Contains obw_utilities.module.
+ */
+
+use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Core\Ajax\InvokeCommand;
+use Drupal\Core\Ajax\ReplaceCommand;
+use Drupal\Core\Field\FieldFilteredMarkup;
+use Drupal\Core\Link;
+use Drupal\Core\Render\Element\PathElement;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
+use Drupal\obw_utilities\Entity\StoryEntity;
+use Drupal\obw_utilities\StoryManager;
+use Drupal\obw_utilities\Theme\PreprocessNodeManager;
+use Drupal\paragraphs\Entity\Paragraph;
+use Drupal\pathauto\PathautoPatternInterface;
+use Drupal\views\Entity\View;
+use Drupal\views\Plugin\views\cache\CachePluginBase;
+use Drupal\views\Plugin\views\query\QueryPluginBase;
+use Drupal\views\ViewExecutable;
+use Drupal\views\Views;
+use Drupal\webform\Entity\WebformSubmission;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Menu\MenuTreeParameters;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\obw_utilities\Theme\PreprocessViewManager;
+use Drupal\stripe_popup\StripeManager;
+use Drupal\obw_utilities\EntityQuery;
+
+const REFUGEE_STORY_FORMAT = '15';
+const STORY_TYPE = '1';
+const BLOG_TYPE = '2';
+/**
+ * Implements hook_help().
+ */
+function obw_utilities_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the obw_utilities module.
+    case 'help.page.obw_utilities':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Our Better World Utilities') . '</p>';
+      return $output;
+    case 'obw_utilities.export_missing_story_contributors':
+      return '<p>' . t('This function exports stories that has contributor roles with missing users and contributor users with missing roles.') . '</p>';
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function obw_utilities_theme($existing, $type, $theme, $path) {
+  return [
+    'obw_utilities' => [
+      'render element' => 'children',
+    ],
+    'obw_user_login_form' => [
+      'render element' => 'form',
+    ],
+    'obw_user_login_campaign_form' => [
+      'render element' => 'form',
+    ],
+    'obw_user_register_form' => [
+      'render element' => 'form',
+    ],
+    'wl_download_e_booklet_register_form' => [
+      'render element' => 'form',
+    ],
+    'obw_inline_user_register_form' => [
+      'render element' => 'form',
+    ],
+    'obw_user_pass_form' => [
+      'render element' => 'form',
+    ],
+    'static_page_pitch_stories' => [
+      'variables' => [],
+    ],
+    'static_page_create_stories' => [
+      'variables' => [],
+    ],
+    'static_page_partner_us' => [
+      'variables' => [],
+    ],
+    'static_page_obw_345' => [
+      'variables' => [],
+    ],
+    'static_page_obw_347' => [
+      'variables' => [],
+    ],
+    'static_page_obw_330' => [
+      'variables' => [],
+    ],
+    'views_exposed_form_elastic_search' => [
+      'render element' => 'form',
+    ],
+    'obw_add_to_event' => [
+      'variables' => [
+        'subject' => NULL,
+        'date_start' => NULL,
+        'date_end' => NULL,
+        'details' => NULL,
+        'locations' => NULL,
+        'id_event' => NULL,
+      ],
+    ],
+    'webform_handler_remote_post_custom_summary' => [
+      'variables' => ['settings' => NULL, 'handler' => NULL],
+    ],
+    'obw_forum_block' => [
+      'variables' => [
+        'forum_desc_html' => NULL,
+        'list_topics' => NULL,
+        'create_topic_html' => NULL,
+        'msg_no_topic' => NULL,
+        'dont_show_forum' => NULL,
+      ],
+    ],
+    'webform_email_obw_html' => [
+      'variables' => [
+        'subject' => '',
+        'body' => '',
+        'webform_submission' => NULL,
+        'handler' => NULL,
+        'tbt' => FALSE,
+      ],
+    ],
+    'webform_email_obw_birthd8' => [
+      'variables' => [
+        'subject' => '',
+        'body' => '',
+        'webform_submission' => NULL,
+        'handler' => NULL,
+      ],
+    ],
+    'webform_handler_subscribe_weekly_summary' => [
+      'variables' => ['settings' => NULL, 'handler' => NULL],
+    ],
+    'webform_handler_subscribe_monthly_summary' => [
+      'variables' => ['settings' => NULL, 'handler' => NULL],
+    ],
+    'webform_handler_obw_utilities_summary' => [
+      'variables' => ['settings' => NULL, 'handler' => NULL],
+    ],
+  ];
+}
+
+function obw_utilities_webform_element_alter(array &$element, FormStateInterface $form_state, array $context) {
+  if (!empty($element['#webform_id'])) {
+    switch ($element['#webform_id']) {
+      case 'wildlife_what_s_next--email':
+      case 'subscribe_to_newsletter--email':
+      case 'sign_up_newsletter--email':
+      case 'impact_2020_notify_me--email':
+      case 'obw_insider--email':
+      case 'wl_2021_notify_launch_second_sto--email':
+      case 'wl_2021_notify_launch_third_stor--email':
+      case 'mh2021_narrative_coming_soon--email':
+        $validate_pattern = [
+          'Drupal\obw_utilities\Validate\FormValidateConstraint',
+          'validatePattern',
+        ];
+        array_unshift($element['#element_validate'], $validate_pattern);
+        break;
+      case 'contact_us--city':
+        $element['#attributes']['id'] = 'state';
+        $element['#attached']['drupalSettings']['stateElementId'] = 'state';
+        $validate_pattern = [
+          'Drupal\obw_utilities\Validate\FormValidateConstraint',
+          'alterValidateCity',
+        ];
+        $element['#element_validate'][] = $validate_pattern;
+        break;
+      case 'contact_us--purpose':
+        unset($element['#empty_option']);
+        break;
+    }
+
+    if ($element['#type'] == 'webform_telephone') {
+      $account = \Drupal::currentUser();
+      if (!$account->isAnonymous()) {
+        $user = \Drupal\user\Entity\User::load($account->id());
+        if (isset($user->field_account_contact_number) && !empty($user->field_account_contact_number->value)) {
+          $element['#default_value'] = [
+            'phone' => $user->field_account_contact_number->value,
+            'type' => '',
+            'ext' => '',
+          ];
+        }
+      }
+    }
+  }
+
+}
+
+function obw_utilities_field_widget_form_alter(&$element, FormStateInterface $form_state, $context) {
+ /**
+  * customize text format for 5429
+  */
+  switch ($context['items']->getName()) {
+    case 'field_user_bios':
+    case 'field_blog_short_description':
+      $element['#allowed_formats'] = ['bold_and_italic','plain_text'];
+      $element['#default_formats'] = ['bold_and_italic'];
+      // $htmltag = $element['#default_value'];
+      // $element['#default_value'] = strip_tags($htmltag);
+      
+      $element['#format'] = 'plain_text';
+      $element['#after_build'][] = '_field_text_content_after_build';
+    break;
+  } 
+  switch ($context['items']->getName()) {
+    case 'field_story_call_to_actions' :
+    case 'field_orgs_take_action':
+      $element['#attached']['library'][] = 'obw_utilities/call-to-action-form';
+      break;
+    case 'field_story_category' :
+      //TODO: hide add button to writer on select cause, countries, topics
+      break;
+    default:
+      break;
+  }
+
+  //fix issue cannot search for tag name in entity reference tags field
+  if (get_class($context['widget']) == 'Drupal\entityreference_dragdrop\Plugin\Field\FieldWidget\EntityReferenceDragDropWidget') {
+    $element['target_id']['#attached']['library'][] = 'obw_utilities/entityreference_dragdrop';
+  }
+}
+
+/**
+ * remove the guideline below the text format 5429
+ */
+function _field_text_content_after_build(array $element, FormStateInterface $form_state) {
+
+  if (isset($element['format'])) {
+    // Remove Guidelines and Help text.
+    unset($element['format']['help']);
+    unset($element['format']['guidelines']);
+    unset($element['format']['#type']);
+    
+  }
+  return $element;
+}
+
+function obw_utilities_form_user_register_form_alter(&$form, Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  if ('edit-inline-entity-form' === $form['#id']) {
+    if ('entity_browser_user_browser_form' === $form_state->getCompleteForm()['#form_id']) {
+      // Todo: using form have id dynamic. e.g. webform-submission-email-a-friend-add-form--OQsHbiFeWN8
+      $form['#prefix'] = '<div id="user-action-register-wrapper">';
+      $form['#suffix'] = '</div>';
+      $form['actions']['submit']['#value'] = t('Sign up');
+      $form['account']['name']['#title'] = t('Email');
+      $form['account']['mail']['#title'] = t('Email');
+      $form['account']['name']['#required'] = FALSE;
+
+      unset($form['account']['mail']['#description']);
+      unset($form['account']['name']['#description']);
+      unset($form['account']['pass']['#description']);
+
+      $form['account']['mail']['#attributes']['placeholder'] = t('Email');
+
+      // TODO: check module form_placeholder
+      $form['field_account_last_name']['widget'][0]['value']['#attributes']['placeholder'] = $form['field_account_last_name']['widget'][0]['#title'];
+      $form['field_account_first_name']['widget'][0]['value']['#attributes']['placeholder'] = $form['field_account_first_name']['widget'][0]['#title'];
+      $form['field_account_nationality']['widget'][0]['value']['#attributes']['placeholder'] = $form['field_account_nationality']['widget'][0]['#title'];
+      $form['field_account_city_of_residence']['widget'][0]['value']['#attributes']['placeholder'] = $form['field_account_city_of_residence']['widget'][0]['#title'];
+      $form['account']['pass']['#process'][] = [
+        '\Drupal\obw_utilities\Form\UserRegisterForm',
+        '_user_register_form_process_pass',
+      ];
+      $form['account']['pass']['#required'] = FALSE;
+
+      $form['#theme'] = ['obw_inline_user_register_form'];
+      array_unshift($form['#element_validate'], [
+        '\Drupal\obw_utilities\Form\EntityBrowserFormManager',
+        'userRegisterFormValidate',
+      ]);
+
+      $form['actions']['submit']['#attributes'] = [
+        'class' => [
+          'use-ajax',
+        ],
+      ];
+      $form['actions']['submit']['#ajax'] = [
+        'callback' => [
+          '\Drupal\obw_utilities\AccountMgmt',
+          'submitOBWUserRegisterFormAjax',
+        ],
+        'event' => 'click',
+      ];
+    }
+
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function obw_utilities_preprocess_node(&$variables) {
+  switch ($variables['node']->bundle()) {
+    case 'wl_download_storybook':
+      if (isset($_COOKIE['download_creature_reuse'])) {
+        $variables['#attached']['library'][] = 'obw_utilities/obw-webform-download-2021-creature-download';
+        $variables['download_creature_reuse'] = TRUE;
+        $variables['#cache']['contexts'][] = 'cookies:download_creature_reuse';
+      }
+      break;
+    case 'webform':
+      $key_param = \Drupal::requestStack()->getCurrentRequest()->get('key');
+      $field_webform = $variables['node']->webform->getValue();
+      if (!empty($field_webform)) {
+        $webform_id = reset($field_webform)['target_id'];
+      }
+      if ((isset($webform_id) && $webform_id === 'support_us_tax_form')) {
+        if (!empty(\Drupal::requestStack()
+          ->getCurrentRequest()
+          ->get('test_mode'))) {
+          return;
+        }
+        $variables['#cache']['max-age'] = 0;
+        \Drupal::service('page_cache_kill_switch')->trigger();
+        if (!empty($key_param)) {
+          $array_submission = EntityQuery::getSubmissionIDByKey($key_param);
+          $submission = end($array_submission);
+          if (!empty($submission)) {
+            $webform_submission = WebformSubmission::load($submission->sid);
+            if (!empty($webform_submission)) {
+              $webform_submission_data = $webform_submission->getData();
+              $email = isset($webform_submission_data['email']) ? $webform_submission_data['email'] : '';
+              $checkDonationByEmail = StripeManager::getTotalDonationByMail($email, 0, TRUE);
+              if ($checkDonationByEmail < 50) {
+                \Drupal::logger('access_tax_relief')
+                  ->error(t('Donation amount below 50$. Your donation amount is ' . $checkDonationByEmail));
+                _redirect_to_404();
+              }
+            }
+          }
+          else {
+            \Drupal::logger('access_tax_relief')
+              ->error(t('Don\'t have submission by key param!'));
+            _redirect_to_404();
+          }
+        }
+        else {
+          \Drupal::logger('access_tax_relief')->error(t('Missing key param!'));
+          _redirect_to_404();
+        }
+      }
+      break;
+  }
+}
+
+function _redirect_to_404() {
+  $response = new RedirectResponse('/node/1236');
+  $response->send();
+  die();
+}
+
+function obw_utilities_form_alter(&$form, Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  // Todo: using form have id dynamic. e.g. webform-submission-email-a-friend-add-form--OQsHbiFeWN8
+  if (isset($form['#form_id']) && $form['#form_id'] == 'entity_browser_user_single_select_form') {
+    if (!empty($form['widget']['view']['entity_browser_select'])) {
+      foreach ($form['widget']['view']['entity_browser_select'] as &$item) {
+        if (!empty($item['#type']) && $item['#type'] == 'radio') {
+          $item['#attributes']['name'] = 'entity_browser_select[]';
+        }
+      }
+    }
+  }
+
+  if ($form_state->hasValue('form_id')) {
+    $form_id_value = $form_state->getValue('form_id');
+    if (in_array($form_id_value, ['webform_submission_email_a_friend_add_form'])) {
+      $form_id = $form_id_value;
+    }
+  }
+
+  $account = \Drupal::currentUser();
+  switch ($form_id) {
+    case 'node_preview_form_select':
+      unset($form['view_mode']);
+      break;
+    case 'webform_submission_email_a_friend_add_form':
+    case 'webform_submission_share_email_about_crt_add_form':
+      $story_id = isset($_GET['nid']) ? $_GET['nid'] : '';
+      $token = isset($_GET['token']) ? $_GET['token'] : '';
+      $redirect_url = isset($_GET['redirect_url']) ? $_GET['redirect_url'] : '';
+      global $base_url;
+      $url = $base_url . \Drupal::service('path_alias.manager')
+          ->getAliasByPath('/node/' . $story_id);
+      // Form already submit
+      if (!empty($token)) {
+        $response = new RedirectResponse($url);
+        $response->send();
+      }
+
+      $node = Node::load($story_id);
+      if (!empty($node)) {
+        $form['elements']['story_id']['#value'] = $story_id;
+        $title = $node->getTitle();
+        if (isset($_GET['share']) && $_GET['share'] == 'email') {
+          $title = t('Make an impact with me!');
+          $url = t('Come join in making an impact at this event, check out this story to find out more') . " $url";
+        }
+
+        $default_node_subject = $node->hasField('field_sharing_subject') ? $node->get('field_sharing_subject')
+          ->getString() : '';
+        $default_node_message = $node->hasField('field_sharing_message') ? $node->get('field_sharing_message')
+          ->getString() : '';
+        if ($node->getType() == 'landing_page' && !empty(\Drupal::request()->query->get('author'))) {
+          $landing_format = PreprocessNodeManager::getNodeFormat('landing');
+          if (!empty($node->field_landing_format->getValue())) {
+            if ($landing_format[$node->field_landing_format->getValue()[0]['value']] == 'obw_birthday_2021') {
+              $default_node_subject = 'Our Better World’s Values in Action';
+              $default_node_message = 'What does authenticity, compassion and humility look like in action? We asked our community what our values meant to them, and this was what they shared. Read their stories, or submit your own.';
+            }
+          }
+        }
+
+        $form["elements"]["subject"]["#default_value"] = !empty($default_node_subject) ? $default_node_subject : $title;
+        $form["elements"]["note"]["#default_value"] = $default_node_message;
+
+        if ($node->getType() == 'story') {    
+          $default_email_body_story = $node->field_story_short_description->value;      
+          $form['elements']['notenew']['#default_value'] = isset($default_email_body_story) ? $default_email_body_story : $form['elements']['notenew']['#default_value']; 
+        }
+
+        $value_node = '';
+        if (!empty($form_state->getUserInput()['note'])) {
+          $value_node = trim($form_state->getUserInput()['note'], "\r\n");
+          $value_node = $value_node . "\r\n";
+        }
+
+        if (isset($node->field_default_msg_share_via_mail) && !empty($node->field_default_msg_share_via_mail->value)) {
+          $value_node = $node->field_default_msg_share_via_mail->value;
+        }
+
+        if ($node->getType() == 'gsoty_story') {
+          $pet_id = 4;
+          $submission_storage = \Drupal::entityTypeManager()
+            ->getStorage('webform_submission');
+          if (!$account->isAnonymous()) {
+            //            $user_voted_this_gsoty_story = $submission_storage->loadByEntities($gsoty_webform, $node, $account);
+          }
+          if (isset($user_voted_this_gsoty_story) && count($user_voted_this_gsoty_story) > 0) {
+            $pet_id = 2;
+          }
+
+          $form['elements']['node_type']['#value'] = 'gsoty_story';
+
+          $pet = pet_load($pet_id);
+          if (!empty($pet)) {
+            $form['elements']['subject']['#value'] = $pet->getSubject();
+          }
+        }
+
+        if (!empty($value_node)) {
+          $form['elements']['note']['#value'] = $value_node;
+        }
+        if (!empty($form_state->getUserInput()['subject'])) {
+          $form['elements']['subject']['#value'] = $form_state->getUserInput()['subject'];
+        }
+
+        $form['elements']['site_domain']['#value'] = $base_url . '/';
+        $form['elements']['story_url']['#value'] = substr($node->toUrl()
+          ->toString(), 1);
+        if (!empty(\Drupal::request()->query->get('author'))) {
+          $form['elements']['story_url']['#value'] .= '?author=' . \Drupal::request()->query->get('author');
+        }
+        $form['elements']['story_title']['#value'] = $node->getTitle();
+        $form['elements']['nodeid']['#default_value'] = $story_id;
+      }
+      if (!empty($redirect_url)) {
+        if (!empty($form['elements']['redirect_url'])) {
+          $form['elements']['redirect_url']['#default_value'] = $redirect_url;
+          $form['elements']['story_url']['#default_value'] = $redirect_url;
+        }
+
+        if (isset($_GET['view_title'])) {
+          $form['elements']['story_title']['#value'] = $_GET['view_title'];
+        }
+        switch ($redirect_url) {
+          case '/series/refugees/stories':
+            $form['elements']['subject']['#default_value'] = 'Refugees: Displaced, Not Discouraged';
+            $form['elements']['note']['#default_value'] = 'A collection of interactive and video stories documenting refugee life in Asia, and the communities that support them.';
+            break;
+          case '/series/refugees/blog':
+            $form['elements']['subject']['#default_value'] = 'Refugees: Community Blog';
+            $form['elements']['note']['#default_value'] = 'In their own words, refugees and their friends and advocates share their journeys, the relationships formed and their hopes and dreams on our Community Blog.';
+            break;
+          case '/series/refugees/take-action':
+            $form['elements']['subject']['#default_value'] = 'Refugees: Take action';
+            $form['elements']['note']['#default_value'] = 'With understanding and support, refugees can find a way out of their limbo. Find out how you can help.';
+          case '/series/mental-health/blog':
+          case '/series/blog':
+            $form['elements']['story_title']['#value'] = 'Mental Health: Stories From Our Community';
+            $form['elements']['subject']['#default_value'] = 'Mental Health: Stories From Our Community';
+            $form['elements']['note']['#default_value'] = "Struggling with your mental health or know of someone who is? Hear from real people who've been there too.";
+            break;
+          case '/series/mental-health/support-toolkit':
+            $form['elements']['story_title']['#value'] = 'Mental Health: Find Support';
+            $form['elements']['subject']['#default_value'] = 'Mental Health: Find Support';
+            $form['elements']['note']['#default_value'] = 'Here are hotlines and resources to help you understand the mental health maze.';
+            break;
+        }
+      }
+      break;
+    case 'webform_submission_email_event_a_friend_add_form':
+      $event_id = isset($_GET['nid']) ? $_GET['nid'] : '';
+      $event_node = Node::load($event_id);
+      if (!empty($event_node)) {
+        $default_email_subject = $event_node->getTitle();
+        if (isset($event_node->field_event_default_email_subjec) && !empty($event_node->field_event_default_email_subjec->value)) {
+          $default_email_subject = $event_node->field_event_default_email_subjec->value;
+        }
+
+        if (isset($event_node->field_event_email_msg_static) && !empty($event_node->field_event_email_msg_static->value)) {
+          $default_email_body = $event_node->field_event_email_msg_static->value;
+        }
+
+        $form['elements']['story_url']['#value'] = $event_node->toUrl()
+          ->toString();
+        $form['elements']['story_title']['#value'] = $event_node->getTitle();
+        $form['elements']['subject']['#value'] = (empty($form_state->getUserInput()['subject'])) ? $default_email_subject : $form_state->getUserInput()['subject'];
+        $form['elements']['notenew']['#default_value'] = isset($default_email_body) ? $default_email_body : $form['elements']['notenew']['#default_value']; 
+        //        $form['elements']['subject']['#value'] = !empty($event_node->field_event_email_subject->value) ? $event_node->field_event_email_subject->value : '';
+        //        $form['elements']['static_message']['#value'] = !empty($event_node->field_event_email_msg_static->value) ? $event_node->field_event_email_msg_static->value : '';
+      }
+      break;
+    case 'webform_submission_share_email_meet_the_residents_add_form': 
+      global $base_url;
+      $url = isset($_GET['dest']) ? $_GET['dest'] : '';
+      $title = isset($_GET['title']) ? $_GET['title'] : '';
+      $form['elements']['site_domain']['#value'] = $base_url . '/';
+      if (!empty($url) && !empty($title)) {
+        $form['elements']['story_url']['#value'] = $url;
+        $form['elements']['story_title']['#value'] = $title;
+      }
+      break;
+    case 'entity_browser_story_categories_form':
+      //TODO: alter hide menu create for writer
+      //@TODO: remove this hardcode tab, replace by another solution
+      $form['widget_selector']['tab_selector_7810c323-422f-4891-a993-71c6bdeb265a']['#disabled'] = TRUE;
+      break;
+    case 'webform_submission_contact_us_node_97_add_form':
+      $purpose_id = isset($_GET['purpose']) ? $_GET['purpose'] : '';
+      if (!empty($purpose_id) && isset($form['elements']['header_section']['purpose'])) {
+        $form['elements']['header_section']['purpose']['#default_value'] = $purpose_id;
+      }
+      $form['#attached']['library'][] = 'obw_utilities/form-contact-us';
+      break;
+    case 'obw_contributor_profile_profile_settings_form':
+      $form['#attached']['library'][] = 'obw_utilities/form-user-profile';
+      break;
+    case 'profile_settings_change_password_form':
+      $form['#attached']['library'][] = 'obw_utilities/form-password-profile';
+      break;
+    case 'webform_submission_volunteer_sign_up_node_151_add_form':
+      $form['#attached']['library'][] = 'obw_utilities/form-volunteer-signup';
+      break;
+    case 'webform_submission_support_us_node_148_add_form':
+      $form['#attached']['library'][] = 'obw_utilities/form-submission-support-us';
+      break;
+    case 'webform_submission_volunteer_sign_up_node_125_add_form':
+      $form['#attached']['library'][] = 'obw_utilities/form-submission-volunteer';
+      break;
+    case 'profile_meet_the_team_add_form':
+      $form['field_public_profile_bio']['widget'][0]['#format'] = 'html_no_editor';
+      break;
+    case 'menu_edit_form':
+      if (!empty($form['id']) && !empty($form['id']['#default_value']) && $form['id']['#default_value'] == 'wildlife-menu') {
+        $form['title_main_page'] = [
+          '#type' => 'textfield',
+          '#title' => t('Title landing page'),
+          '#default_value' => \Drupal::config('obw_utilities.settings')
+            ->get('wild_life_landing_title'),
+          '#weight' => 0,
+          '#required' => TRUE,
+        ];
+
+        $form['link_to_main_page'] = [
+          '#type' => 'path',
+          '#title' => t('Link to landing page'),
+          '#convert_path' => PathElement::CONVERT_URL,
+          '#default_value' => \Drupal::config('obw_utilities.settings')
+            ->get('wild_life_landing_link'),
+          '#description' => t('You must enter an internal path such as /node/add'),
+          '#weight' => 0,
+          '#required' => TRUE,
+        ];
+        $form['actions']['submit']['#submit'][] = 'obw_utilities_set_path_to_config_file';
+      }
+      break;
+    case 'webform_ui_element_type_select_form':
+      global $base_url;
+      $form['#prefix'] .= "<h1 style='color: red;'>The unnecessary elements have been disabled. To enable please access this link <a href='$base_url/admin/structure/webform/config/elements' target='_blank'>webform elements setting</a>.</h1>";
+      break;
+    case 'node_activities_edit_form':
+      $form['status']['widget']['value']['#title'] = 'Publish';
+      break;
+    case 'user_register_form':
+      array_unshift($form['actions']['submit']['#submit'], 'obw_utilities_handler_before_submit_register_form');
+      break;
+    case 'node_pdf_page_form':
+    case 'node_pdf_page_edit_form':
+      $form['body']['#states'] = [
+        'visible' => [
+          [':input[name="field_pdf_format"]' => ['value' => '1']],
+          'or',
+          [':input[name="field_pdf_format"]' => ['value' => '2']],
+        ],
+      ];
+      $form['field_pdf_desc_new_acc']['#states'] = [
+        'visible' => [
+          ':input[name="field_pdf_format"]' => ['value' => '2'],
+        ],
+      ];
+      $form['field_pdf_description']['#states'] = [
+        'visible' => [
+          ':input[name="field_pdf_format"]' => ['value' => '3'],
+        ],
+      ];
+      break;
+    case 'webform_edit_form':
+      $form['#attached']['library'][] = 'obw_utilities/obw-webform-fields-edit-css';
+      break;
+  };
+
+  if (isset($form['#webform_id']) && $form['#webform_id'] == 'obw_issue_collector') {
+    $request_server = Drupal::request()->server;
+    $form['elements']['dynamic_webform']['container_form']['container']['user_agent']['#value'] = $request_server->get('HTTP_USER_AGENT');
+    $current_url = (!empty($request_server->get('HTTPS')) ? 'https://' : 'http://') . $request_server->get('HTTP_HOST') . Url::fromRoute('<current>')
+        ->toString();
+    $form['elements']['dynamic_webform']['container_form']['container']['location']['#value'] = $current_url;
+    $form['elements']['dynamic_webform']['container_form']['container']['referrer']['#value'] = \Drupal::request()->headers->get('referer');
+  }
+
+
+  switch ($form['#id']) {
+    case 'views-exposed-form-load-sub-stories-of-the-landing-page-migrant-wokers-support-them':
+      $request = Drupal::request();
+      if (!empty($request->get('type'))) {
+        $input = &$form_state->getUserInput();
+        switch ($request->get('type')) {
+          case 'donate':
+          case '1':
+            $input['type'] = 1;
+            break;
+          case 'volunteer':
+          case '2':
+            $input['type'] = 2;
+            break;
+          default:
+            $input['type'] = NULL;
+            break;
+        }
+      }
+      break;
+    case 'views-exposed-form-cta-list-page-refugees-2021-take-actions':
+      $request = Drupal::request();
+      if (!empty($request->get('type'))) {
+        $input = &$form_state->getUserInput();
+        switch ($request->get('type')) {
+          case 'volunteer':
+          case '3':
+            $input['type'] = 3;
+            break;
+          case 'support':
+          case '2':
+            $input['type'] = 2;
+            break;
+          default:
+            $input['type'] = 1;
+            break;
+        }
+      }
+      break;
+    case 'views-exposed-form-story-mh2021-resources-help':
+      $route_name = \Drupal::routeMatch()->getRouteName();
+      if ($route_name === 'view.story.mh2021_resources_help') {
+        $new_opt = ['-1' => $form['field_story_mh2020_resource_tags_target_id']['#options'][1]];
+        unset($form['field_story_mh2020_resource_tags_target_id']['#options']['All']);
+        unset($form['field_story_mh2020_resource_tags_target_id']['#options'][1]);
+        $form['field_story_mh2020_resource_tags_target_id']['#options'] = $new_opt + $form['field_story_mh2020_resource_tags_target_id']['#options'];
+      }
+      break;
+
+    case 'views-exposed-form-load-sub-stories-of-the-landing-page-block-mental-health-2020-resouces-for-year-2':
+      $request = \Drupal::request();
+      if (!$request->get('field_story_mh2020_resource_tags_target_id')) {
+        $input = $form_state->getUserInput();
+        $input['field_story_mh2020_resource_tags_target_id'] = ['1'];
+        $form_state->setUserInput($input);
+      }
+      break;
+
+  }
+  $form['#validate'][] = '_obw_utilities_form_validation_obw_subscribe';
+  // Add Css hidden field library
+  $form['#attached']['library'][] = 'obw_utilities/all-form';
+  $form['#attached']['library'][] = 'obw_utilities/semantic';
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function obw_utilities_webform_submission_form_alter(&$form, $form_state) {
+  switch ($form['#webform_id']) {
+    case 'support_us_feedback_form':
+      $form['actions']['#states'] = [
+        "enabled" => [
+          '.webform-submission-support-us-feedback-form-form :input[name="feedback"]' => [
+            "!value" => "",
+          ],
+        ],
+      ];
+      break;
+    case 'support_us_tax_form':
+      $form['elements']['actions']['#states'] = [
+        "enabled" => [
+          [
+            '.webform-submission-support-us-tax-form-form :input[name="tax_relief"]' => ["value" => "yes"],
+            '.webform-submission-support-us-tax-form-form :input[name="nric_fin_number"]' => ["!value" => ""],
+          ],
+          'or',
+          [
+            '.webform-submission-support-us-tax-form-form :input[name="tax_relief"]' => ["value" => "no"],
+          ],
+        ],
+      ];
+
+      break;
+    case 'share_human_kindness':
+    case 'humankind_campaign':
+    case 'humankind_campaign_testing':
+      if (isset($form['elements']) && isset($form['elements']['status'])) {
+        $form['elements']['status']['#access'] = FALSE;
+      }
+      break;
+    case 'email_me_a_copy_of_my_persona':
+      if (!empty($form['elements']) && !empty($form['elements']['container']) && !empty($form['elements']['container']['account_status'])) {
+        $form['elements']['container']['account_status']['#access'] = FALSE;
+      }
+      break;
+    case 'impact_2020_notify_me_update_pre':
+      if (PreprocessNodeManager::checkUserSubscribeObw()) {
+        $form['elements']['container']['would_you_like_to_receive_stories_of_good_like_this_one_from_our']['#default_value'] = PreprocessNodeManager::checkUserSubscribeObw();
+      }
+      break;
+    case 'leopard_pdf_2021':
+      $form['actions']['submit']['#submit'][] = 'set_cookie_after_submit_wf';
+      break;
+    case 'obw_birthday_2021':
+      $route = \Drupal::routeMatch()->getRouteName();
+      $form['#attached']['library'][] = 'obw_utilities/obw-webform-fields-condition';
+      if (isset($form['elements']['obw_expand_form']['container_wrapper']['row_wrapper']['group']['row']['status'])
+        && isset($form['elements']['obw_expand_form']['container_wrapper']['row_wrapper']['group']['row']['image_type'])
+        && isset($form['elements']['obw_expand_form']['container_wrapper']['row_wrapper']['group']['row']['obw_values_story'])
+        && isset($form['elements']['obw_expand_form']['container_wrapper']['row_wrapper']['group']['row']['shapes'])
+        && $route === 'entity.node.canonical') {
+        unset($form['elements']['obw_expand_form']['container_wrapper']['row_wrapper']['group']['row']['status']);
+        unset($form['elements']['obw_expand_form']['container_wrapper']['row_wrapper']['group']['row']['image_type']);
+        unset($form['elements']['obw_expand_form']['container_wrapper']['row_wrapper']['group']['row']['obw_values_story']);
+        unset($form['elements']['obw_expand_form']['container_wrapper']['row_wrapper']['group']['row']['shapes']);
+      }
+      break;
+    case 'email_a_friend':
+      $form['actions']['submit']['#ajax'] = [
+        'callback' => 'callbackSubmitEmailAFriend',
+      ];
+      break;
+    default:
+      $form['actions']['submit']['#submit'][] = 'set_cookie_after_submit_wf';
+  }
+  //5466
+  array_unshift($form['actions']['submit']['#submit'],'add_calendar_in_person');
+  //5466  
+}
+
+//5466
+function add_calendar_in_person($form, FormStateInterface $form_state) {
+  if($form_state->getValue('i_would_like_to_attend') != null){
+    if(isset($_SESSION['event_attend_value']) && !empty($_SESSION['event_attend_value'])){
+      //DO NOTHING
+      unset($_SESSION['event_attend_value']);
+      $_SESSION['event_attend_value'] = $form_state->getValue('i_would_like_to_attend');
+    }else{
+      $_SESSION['event_attend_value'] = $form_state->getValue('i_would_like_to_attend');
+    }
+    
+  }
+}
+//5466
+
+function callbackSubmitEmailAFriend(array &$form, FormStateInterface $form_state) {
+  $response = new \Drupal\Core\Ajax\AjaxResponse();
+  // Get webform elements.
+  $confirmation_message = $form_state->getFormObject()
+    ->getWebform()
+    ->getSetting('confirmation_message');
+  if ($form_state->hasAnyErrors()) {
+    $response->addCommand(new ReplaceCommand('#email-a-friend', $form));
+    $form_errors = $form_state->getErrors();
+    foreach ($form_errors as $name => $error_message) {
+      switch ($name) {
+        case 'captcha_response':
+          $response->addCommand(new InvokeCommand('.recaptcha-processed', 'addClass', ['error']));
+          break;
+      }
+    }
+  }
+  else {
+    $html = [
+      '#markup' => '<div class="mfp-hide thank-you-share-email thank-you-page gray-bg"><div class="container">'
+        . '<div class="webform-confirmation__message">'
+        . $confirmation_message
+        . '</div></div></div>',
+    ];
+    $response->addCommand(new \Drupal\Core\Ajax\ReplaceCommand('#email-a-friend', $html));
+  }
+
+  return $response;
+}
+
+function set_cookie_after_submit_wf(&$form, FormStateInterface $form_state) {
+  switch ($form['#webform_id']) {
+    case 'leopard_pdf_2021':
+      setcookie('wl2021_' . $form['#webform_id'] . '_cookie', TRUE, 0, '/');
+      if (!empty($form_state->getValues()) && !empty($form_state->getValues()['which_language_to_download'])) {
+        $lang_download = $form_state->getValues()['which_language_to_download'];
+        $lang_options = array_keys($form['elements']['wrapper']['which_language_to_download']['#options']);
+        $current_path = \Drupal::service('path.current')->getPath();
+        if (preg_match('/node\/(\d+)/', $current_path, $matches)) {
+          $node = Node::load($matches[1]);
+          if ($node->getType() == 'pdf_page') {
+            if ($node->hasField('field_pdf_files') && !empty($node->field_pdf_files->getValue())) {
+              $files_download = [];
+              if ($lang_download === 'Both') {
+                foreach ($node->field_pdf_files as $file) {
+                  $files_download[] = [
+                    'url' => file_create_url($file->entity->uri->value),
+                    'name' => $file->entity->filename->value,
+                    'id' => $file->entity->fid->value,
+                  ];
+                }
+              }
+              else {
+                if (array_search($lang_download, $lang_options) !== FALSE) {
+                  $pos = array_search($lang_download, $lang_options);
+                  $file = $node->field_pdf_files[$pos];
+                  $files_download[] = [
+                    'url' => file_create_url($file->entity->uri->value),
+                    'name' => $file->entity->filename->value,
+                    'id' => $file->entity->fid->value,
+                  ];
+                }
+              }
+              if (!empty($files_download)) {
+                $session_handler = \Drupal::service('obw_social.session_handler');
+                $session_handler->set($form['#webform_id'] . '_files', $files_download);
+              }
+            }
+          }
+        }
+      }
+      break;
+    default:
+      setcookie('submitted_form_' . $form['#webform_id'] . '_cookie', TRUE, 0, '/');
+  }
+}
+
+function obw_utilities_handler_before_submit_register_form(&$form, FormStateInterface $form_state) {
+  $obw_utilities_service = \Drupal::service('obw_utilities.service');
+  if ($obw_utilities_service->isContentTypePage('wl_download_storybook')
+    && !empty($form_state->getUserInput()['field_wl_download_id'])) {
+    $session_handler = Drupal::service('obw_social.session_handler');
+    $session_handler->set('come_back', \Drupal::service('path.current')
+        ->getPath() . '&wl_ebook_id=' . $form_state->getUserInput()['field_wl_download_id']);
+  }
+}
+
+//hook_theme_suggestions_HOOK_alter()
+function obw_utilities_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
+
+  if ($hook == 'form' && !empty($variables['element']['#id'])) {
+    $suggestions[] = 'form__' . str_replace('-', '_', $variables['element']['#id']);
+  }
+}
+
+/**
+ * hook_entity_presave(Drupal\Core\Entity\EntityInterface $entity)
+ */
+function obw_utilities_node_presave(Drupal\Core\Entity\EntityInterface $entity) {
+
+  if ($entity->bundle() == 'story') {
+    StoryManager::setHeroImage($entity);
+    if (isset($entity->field_story_feature_media) && !empty($entity->field_story_feature_media->entity)) {
+      $entity->field_story_feature_media->entity->set('uid', \Drupal::currentUser()
+        ->id());
+    }
+    StoryManager::calculateTheVideoDurationAutomatically($entity);
+  }
+}
+
+function obw_utilities_toolbar_alter(&$items) {
+  $current_user = \Drupal::currentUser();
+  $moduleHandler = \Drupal::service('module_handler');
+
+  $empty_item_cacheability = [
+    '#cache' => [
+      'contexts' => [
+        'user.permissions',
+      ],
+    ],
+  ];
+
+  $manipulators = [
+    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
+    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
+    ['callable' => 'toolbar_menu_navigation_links'],
+  ];
+
+  $roles = $current_user->getRoles();
+  $menu_tree_obw_home = \Drupal::service('toolbar.menu_tree');
+
+  if (in_array('administrator', $roles)) {
+    $parameters = new MenuTreeParameters();
+    $parameters->setMinDepth(1)->setMaxDepth(3)->onlyEnabledLinks();
+    $tree = $menu_tree_obw_home->load('obw_home', $parameters);
+    $tree = $menu_tree_obw_home->transform($tree, $manipulators);
+    $renderable_menu = $menu_tree_obw_home->build($tree);
+    $items['obw_home'] = [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('OBW Homepage'),
+        '#url' => Url::fromRoute('<front>'),
+        '#attributes' => [
+          'title' => t('Welcome to OBW'),
+          'class' => [
+            'toolbar-icon',
+            'toolbar-icon-menu',
+            'toolbar-icon-obw',
+          ],
+        ],
+      ],
+      'tray' => [
+        '#heading' => t('OBW'),
+        '#wrapper_attributes' => [],
+        'menu' => $renderable_menu,
+      ],
+      '#weight' => -170,
+    ];
+
+    // 5526
+    $parameters = new MenuTreeParameters();
+    $parameters->setMinDepth(1)->setMaxDepth(3)->onlyEnabledLinks();
+    $tree = $menu_tree_obw_home->load('action_admin', $parameters);
+    $tree = $menu_tree_obw_home->transform($tree, $manipulators);
+    $renderable_menu = $menu_tree_obw_home->build($tree);
+     //Action menu
+     $items['action_admin'] = [
+       '#type' => 'toolbar_item',
+       'tab' => ['#type' => 'link',
+       '#title' => t('Actions'),
+       '#url' => Url::fromRoute('<front>'),
+       '#attributes' => [
+        'title' => t('Action'),
+        'class' => [
+          'toolbar-icon',
+          'toolbar-icon-menu',
+          'toolbar-icon-obw',
+         ],
+         ],
+         ],
+          'tray' => [
+            '#heading' => t('OBW'),
+            '#wrapper_attributes' => [],
+             'menu' => $renderable_menu,
+            ],
+             '#weight' => -170,
+            ];
+
+    //5526
+  
+  }
+
+  if (in_array('writer', $roles)) {
+    $parameters = new MenuTreeParameters();
+    $parameters->setMinDepth(1)->setMaxDepth(3)->onlyEnabledLinks();
+    $tree = $menu_tree_obw_home->load('obw_writer', $parameters);
+    $tree = $menu_tree_obw_home->transform($tree, $manipulators);
+    $renderable_menu_writer = $menu_tree_obw_home->build($tree);
+
+    $items['writer_menu'] = [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('Stories'),
+        '#url' => Url::fromUri('internal:/admin/writer'),
+        '#attributes' => [
+          'title' => t('Writer menu'),
+          'class' => [
+            'toolbar-icon',
+            'toolbar-icon-menu',
+            'toolbar-icon-obw',
+          ],
+        ],
+      ],
+      'tray' => [
+        '#heading' => t('Writer'),
+        '#wrapper_attributes' => [], 
+        'menu' => $renderable_menu_writer,
+      ],
+      '#weight' => -200,
+    ];
+  }
+  if (in_array('content_admin', $roles) || in_array('administrator', $roles)) {
+    $parameters = new MenuTreeParameters();
+    $parameters->setMinDepth(1)->setMaxDepth(3)->onlyEnabledLinks();
+    $tree = $menu_tree_obw_home->load('obw_content_admin', $parameters);
+    $tree = $menu_tree_obw_home->transform($tree, $manipulators);
+    $renderable_menu_content_admin = $menu_tree_obw_home->build($tree);
+
+    $items['writer_menu'] = [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('Stories'),
+        '#url' => Url::fromUri('internal:/admin/content-admin'),
+        '#attributes' => [
+          'title' => t('Content Admin menu'),
+          'class' => [
+            'toolbar-icon',
+            'toolbar-icon-menu',
+            'toolbar-icon-obw',
+          ],
+        ],
+      ],
+      'tray' => [
+        '#heading' => t('Content Admin'),
+        '#wrapper_attributes' => [],
+        'menu' => $renderable_menu_content_admin,
+      ],
+      '#weight' => -200,
+    ];
+
+    $parameters = new MenuTreeParameters();
+    $parameters->setMinDepth(1)->setMaxDepth(3)->onlyEnabledLinks();
+    $tree = $menu_tree_obw_home->load('talk_integration', $parameters);
+    $tree = $menu_tree_obw_home->transform($tree, $manipulators);
+    $renderable_menu_talk = $menu_tree_obw_home->build($tree);
+    $items['talk_integration'] = [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('Comment System'),
+        '#url' => Url::fromRoute('<front>'),
+        '#attributes' => [
+          'title' => t('Comments'),
+          'class' => [
+            'toolbar-icon',
+            'toolbar-icon-menu',
+            'toolbar-icon-obw',
+          ],
+        ],
+      ],
+      'tray' => [
+        '#heading' => t('OBW'),
+        '#wrapper_attributes' => [],
+        'menu' => $renderable_menu_talk,
+      ],
+      '#weight' => -140,
+    ];
+
+    $parameters = new MenuTreeParameters();
+    $parameters->setMinDepth(1)->setMaxDepth(3)->onlyEnabledLinks();
+    $tree = $menu_tree_obw_home->load('taxo_management', $parameters);
+    $tree = $menu_tree_obw_home->transform($tree, $manipulators);
+    $taxo_management = $menu_tree_obw_home->build($tree);
+    $items['taxo_management'] = [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('Categories'),
+        '#url' => Url::fromRoute('<front>'),
+        '#attributes' => [
+          'title' => t('Categories'),
+          'class' => [
+            'toolbar-icon',
+            'toolbar-icon-menu',
+            'toolbar-icon-obw',
+          ],
+        ],
+      ],
+      'tray' => [
+        '#heading' => t('OBW'),
+        '#wrapper_attributes' => [],
+        'menu' => $taxo_management,
+      ],
+      '#weight' => -190,
+    ];
+
+    //    Wildlife campaign
+    $parameters = new MenuTreeParameters();
+    $parameters->setMinDepth(1)->setMaxDepth(3)->onlyEnabledLinks();
+    $tree = $menu_tree_obw_home->load('campaigns_admin', $parameters);
+
+    $tree = $menu_tree_obw_home->transform($tree, $manipulators);
+    $campaigns_admin = $menu_tree_obw_home->build($tree);
+    $items['campaigns'] = [
+      '#type' => 'toolbar_item',
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('Campaigns'),
+        '#url' => Url::fromRoute('<front>'),
+        '#attributes' => [
+          'title' => t('Campaigns'),
+          'class' => [
+            'toolbar-icon',
+            'toolbar-icon-menu',
+            'toolbar-icon-obw',
+          ],
+        ],
+      ],
+      'tray' => [
+        '#heading' => t('OBW'),
+        '#wrapper_attributes' => [],
+        'menu' => $campaigns_admin,
+      ],
+      '#attached' => [
+        'library' => [
+          'admin_toolbar/toolbar.tree',
+        ],
+      ],
+      '#weight' => -145,
+    ];
+  }
+  if (in_array('view_donation', $roles) || in_array('administrator', $roles)) {
+    if (in_array('view_donation', $roles)) {
+      $parameters = new MenuTreeParameters();
+      $parameters->setMinDepth(1)->setMaxDepth(3)->onlyEnabledLinks();
+      $tree = $menu_tree_obw_home->load('obw_view_donation', $parameters);
+      $tree = $menu_tree_obw_home->transform($tree, $manipulators);
+
+      $renderable_menu_obw_donation = $menu_tree_obw_home->build($tree);
+      $items['obw_donation_home'] = [
+        '#type' => 'toolbar_item',
+        'tab' => [
+          '#type' => 'link',
+          '#title' => t('Home'),
+          '#url' => Url::fromRoute('<front>'),
+          '#attributes' => [
+            'title' => t('View donation menu'),
+            'class' => [
+              'toolbar-icon',
+              'toolbar-icon-menu',
+              'toolbar-icon-obw',
+            ],
+          ],
+        ],
+        'tray' => [
+          '#heading' => t('View donation'),
+          '#wrapper_attributes' => [],
+          'menu' => $renderable_menu_obw_donation,
+        ],
+        '#weight' => -150,
+      ];
+    }
+  }
+  if (key_exists('devel', $items)) {
+    $items['devel']['#weight'] = 50;
+  }
+  if (key_exists('administration_search', $items)) {
+    $items['administration_search'] = [
+      "#type" => "toolbar_item",
+      'tab' => [
+        '#type' => 'link',
+        '#title' => t('Search'),
+        '#url' => URL::fromRoute('<front>'),
+        '#attributes' => [
+          'class' => [
+            'toolbar-icon',
+          ],
+        ],
+      ],
+      'tray' => [
+        'search' => [
+          '#title' => 'Search',
+          '#type' => 'textfield',
+          '#size' => 60,
+          '#attributes' => [
+            'id' => 'admin-toolbar-search-input',
+            'aria-labelledby' => 'toolbar-item-administration-search',
+            'placeholder' => t('Admin Toolbar quick search'),
+          ],
+        ],
+      ],
+      '#attached' => [
+        'library' => [
+          'admin_toolbar_search/search',
+          'obw_utilities/admin-toolbar-search',
+        ],
+        'drupalSettings' => [
+          'adminToolbarSearch' => [
+            'loadExtraLinks' => \Drupal::service('module_handler')
+              ->moduleExists('admin_toolbar_tools'),
+          ],
+        ],
+      ],
+      '#wrapper_attributes' => [
+        "id" => "admin-toolbar-search-tab",
+      ],
+    ];
+  }
+
+  unset($items['contenta_content']);
+  unset($items['contenta_content_models']);
+  unset($items['contenta_api']);
+  unset($items['contenta']);
+  unset($items['shortcuts']);
+
+  return $items;
+}
+
+/**
+ * Implements hook_entity_view_alter().
+ */
+function obw_utilities_entity_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if ($entity instanceof Node
+    && $entity->getType() == 'story'
+    && ($build['#view_mode'] == 'who_you_can_help_content' || $build['#view_mode'] == 'take_action_content')) {
+    //    $cta_ids = isset($entity->cta_ids)? $entity->cta_ids : 'all';
+    $args = [$entity->id(), 'all'];
+    $view = Views::getView('cta_of_story');
+    if (is_object($view)) {
+      $view->setArguments($args);
+      $view->setDisplay('block_on_you_can_help_result');
+      $view->preExecute();
+      $view->execute();
+      $renderer = \Drupal::service('renderer');
+      $content = $view->buildRenderable('block_on_you_can_help_result', $args);
+      // Render the view
+      $total_rows = $content['#view']->total_rows;
+      $build['#attributes']['data-rowcount'] = $total_rows;
+      $markup = $renderer->render($content);
+      $more_action = '';
+      if ($total_rows > 3) {
+        $more_action = '<div class="more-action"> <a href="' . $entity->toUrl()
+            ->toString() . '" tabindex="-1">'
+          . ($total_rows - 3) . t(" more available actions") . '</a></div>';
+      }
+      $build['view_cta_view_data'] = [
+        '#weight' => 100000,
+        '#prefix' => '<div class="list-action">' . Markup::create($markup) . $more_action . '</div>',
+      ];
+    }
+  }
+
+  switch ($entity->bundle()) {
+    case 'story':
+    case 'spotlight':
+      /*
+       * If you need this for one content type you can do this in a view alter hook.
+       * If you want to disable caching for authenticated and anonymous users you have to set cache max-age = 0 and trigger the kill switch for the internal page cache
+      */
+      if (!empty($display->get('originalMode')) && $display->get('originalMode') == 'mental_health_2020_resources') {
+        $build['#cache']['max-age'] = 0;
+        \Drupal::service('page_cache_kill_switch')->trigger();
+      }
+      break;
+  }
+
+}
+
+function obw_utilities_views_pre_view(ViewExecutable $view, $display_id, array &$args) {
+  switch ($view->id()) {
+    case 'series':
+      if ($display_id == 'block_stories_on_series') {
+        if (!empty($args[0]) &&
+          $path = \Drupal::service('path_alias.manager')
+            ->getPathByAlias('/series/' . $args[0])) {
+          if (preg_match('/node\/(\d+)/', $path, $matches)) {
+            $node = \Drupal\node\Entity\Node::load($matches[1]);
+            if ($node) {
+              $nid = $matches[1];
+              $args[0] = $nid;
+            }
+          }
+        }
+      }
+      break;
+    case 'story':
+      if ($display_id == 'feed_stories') {
+        if (!empty($args[0])) {
+          if (!is_numeric($args[0])) {
+            $terms = \Drupal::entityTypeManager()
+              ->getStorage('taxonomy_term')
+              ->loadByProperties(['name' => $args[0]]);
+            foreach ($terms as $term) {
+              if (!empty($term->get('vid')
+                  ->getValue()) && !empty($term->get('vid')
+                  ->getValue()[0]['target_id']) && $term->get('vid')
+                  ->getValue()[0]['target_id'] == 'story_country') {
+                $args[0] = $term->tid->value;
+                return;
+              }
+            }
+            $path = \Drupal::service('path_alias.manager')
+              ->getPathByAlias('/country/' . $args[0]);
+            if (preg_match('/taxonomy\/term\/(\d+)/', $path, $matches)) {
+              $args[0] = $matches[1];
+              return;
+            }
+            $args[0] = 'all';
+          }
+          else {
+            $term = Term::load($args[0]);
+            if (!isset($term)) {
+              $args[0] = 'all';
+            }
+            else {
+              if (!empty($term->get('vid')
+                  ->getValue()) && !empty($term->get('vid')
+                  ->getValue()[0]['target_id']) && $term->get('vid')
+                  ->getValue()[0]['target_id'] !== 'story_country') {
+                $args[0] = 'all';
+              }
+            }
+          }
+        }
+      }
+      break;
+    case 'load_the_sub_stories_of_the_main_story':
+      if ($display_id == 'block_load_the_sub_stories_of_the_landing') {
+        $landing_view = View::load('load_the_sub_stories_of_the_main_story')
+          ->getDisplay('default');
+        $current_path = Drupal::service('path.current')->getPath();
+        if (preg_match('/node\/(\d+)/', $current_path, $matches)) {
+          $etm = Drupal::entityTypeManager();
+          $node_landing = $etm->getStorage('node')->loadByProperties([
+            'field_story_sub_stories' => $matches[1],
+          ]);
+          if (!empty($node_landing)) {
+            $node_landing = reset($node_landing);
+            $url_landing = $node_landing->toURL()->toString();
+            $footer_landing = $view->getHandler('block_load_the_sub_stories_of_the_landing', 'footer', 'area');
+            if (!empty($footer_landing)) {
+              if ($footer_landing['content'] && $footer_landing['content']['value']) {
+                $footer_landing['content']['value'] = str_replace('####LINK####', $url_landing, $footer_landing['content']['value']);
+                $view->setHandler('block_load_the_sub_stories_of_the_landing', 'footer', 'area', $footer_landing);
+              }
+            }
+          }
+        }
+      }
+      break;
+
+  }
+}
+
+function obw_utilities_mail_alter(&$message) {
+  $session_handler = \Drupal::service('obw_social.session_handler');
+  $wf_id = NULL;
+
+  if (!empty($message['params']) && !empty($message['params']['webform_submission'])) {
+    $wf_id = $message['params']['webform_submission']->webform_id->target_id;
+  }
+
+  if ($wf_id == 'email_me_a_copy_of_my_persona') {
+    $message['headers']['X-PM-Tag'] = 'OBW Birthd8';
+    $ws = $message['params']['webform_submission'];
+    $wf_handler_id = $message['params']['handler']->getHandlerId();
+    $ws_data = $ws->getData();
+
+    if (user_load_by_mail($ws_data['email'])) {
+      $one_time_login = user_pass_reset_url(user_load_by_mail($ws_data['email']));
+      if (!empty($ws_data['persona_id'])) {
+        $message['headers']['X-PM-Tag'] = 'OBW Birthd8';
+        $message['headers']['X-PM-Metadata-persona-id'] = $ws_data['persona_id'];
+        $message['headers']['X-PM-Metadata-account-status'] = $ws_data['account_status'];
+
+        $etm = Drupal::entityTypeManager();
+        //        $ws_data['persona_id'] = 2099;
+        $persona_node = $etm->getStorage('node')->load($ws_data['persona_id']);
+        if ($persona_node && $persona_node->getType() == 'persona') {
+          if (isset($persona_node->field_persona_pdf_file) && !empty($persona_node->field_persona_pdf_file->entity)) {
+            $one_time_login .= '?come_back_url=/node/' . $persona_node->field_persona_pdf_file->entity->id() . '&submission_id=' . $ws->id() . '&handler_id=' . $wf_handler_id . '&email_user=' . $ws_data['email'];
+          }
+        }
+        $message['body'][0] = str_replace("[one-time-login-url]", $one_time_login, $message['body'][0]);
+      }
+    }
+  }
+  else {
+    if (($message['key'] == 'register_no_approval_required'
+        || $message['key'] == 'password_reset')
+      && $session_handler->get('come_back') !== NULL
+      && $session_handler->get('redirect_to_fe') === NULL) {
+
+      if ($session_handler->get('submission_id') !== NULL && $session_handler->get('handler_id') !== NULL) {
+        $ws = WebformSubmission::load($session_handler->get('submission_id'));
+
+        if ($ws) {
+          //          Prevent send default the reset password mail
+          $message['send'] = FALSE;
+          //          Send Email Webform Handler instead of default reset password mail
+          $wf = $ws->getWebform();
+          $handler = $wf->getHandler($session_handler->get('handler_id'));
+          $msg = $handler->getMessage($ws);
+          $handler->sendMessage($ws, $msg);
+        }
+        $session_handler->clear('submission_id');
+        $session_handler->clear('handler_id');
+      }
+      else {
+        __obw_utilities_set_mail_body($session_handler, $message);
+      }
+
+      $session_handler->clear('come_back');
+    }
+    
+    if ($message['key'] === 'email_event_a_friend_email_a_friend') {
+      $body = $message['body'][0];
+      if (empty($session_handler->get('event_static_msg_share_via_email'))) {
+        $body = str_replace("####EVENT_STATIC_MESSAGE####", "", $body);
+      }
+      else {
+        $body = str_replace("####EVENT_STATIC_MESSAGE####", $session_handler->get('event_static_msg_share_via_email'), $body);
+      }
+      $message['body'][0] = $body;
+    } 
+  }
+
+  if ($wf_id === 'contact_us') {
+    foreach ($message['body'] as &$body) {
+      $replace = str_replace('[webform_submission:values:phone]', '', $body->__toString());
+      $body = Drupal\Core\Render\Markup::create($replace);
+    }
+  }
+}
+
+function __obw_utilities_set_mail_body($session_handler, $message) {
+  $pet_id = 13;
+  if ($message['key'] == 'register_no_approval_required') {
+    $pet_id = 14;
+  }
+  $pet = pet_load($pet_id);
+  if (!empty($pet)) {
+    $first_name = $message['params']['account']->field_account_first_name->getValue()[0]['value'];
+    $subject = $pet->getSubject();
+    $body = $pet->getMailbody();
+    $message['subject'] = $subject;
+    $one_time_login = user_pass_reset_url($message['params']['account']);
+
+    $one_time_login .= '?come_back_url=' . $session_handler->get('come_back');
+
+    if (!empty($body)) {
+      $body = str_replace("[user:field_account_first_name]", $first_name, $body);
+      $body = str_replace("[user:one-time-login-url]", $one_time_login, $body);
+      $message['body'][0] = $body;
+    }
+  }
+}
+
+function _obw_utilities_form_validation_obw_subscribe(&$form, FormStateInterface $form_state) {
+  if (!empty($form_state->getUserInput())
+    && !empty($form_state->getUserInput()['obw_subscribe_checkbox'])
+    && $form_state->getUserInput()['obw_subscribe_checkbox'] == 1) {
+    $data = $form_state->getValues();
+    $data['obw_subscribe_option'] = $form_state->getUserInput()['obw_subscribe_radios'];
+    $form_state->setValues($data);
+  }
+}
+
+function obw_utilities_set_path_to_config_file($form, FormStateInterface $form_state) {
+  if (!empty($form_state->getValues())) {
+    $config = \Drupal::service('config.factory')
+      ->getEditable('obw_utilities.settings');
+    $config->set('wild_life_landing_title', $form_state->getValues()['title_main_page'])
+      ->save();
+    $config->set('wild_life_landing_link', $form_state->getValues()['link_to_main_page']->toString())
+      ->save();
+  }
+}
+
+/**
+ * Implements hook_mail().
+ */
+function obw_utilities_mail($key, &$message, $params) {
+  $options = [
+    'langcode' => $message['langcode'],
+  ];
+
+  switch ($key) {
+    case 'node_insert':
+      $message['from'] = \Drupal::config('system.site')->get('mail');
+      $message['subject'] = t('Node created: @title', ['@title' => $params['node_title']], $options);
+      $message['body'][] = \Drupal\Component\Utility\Html::escape($params['message']);
+      break;
+  }
+}
+
+function obw_utilities_views_data_alter(array &$data) {
+  $data['users']['time_last_access_account_created'] = [
+    'title' => t('Time between last access and account created'),
+    'field' => [
+      'title' => t('Time between last access and account created'),
+      'help' => t('Time between last access and account created'),
+      'id' => 'time_last_access_account_created',
+    ],
+  ];
+
+  $data['node']['get_total_of_clicks_node'] = [
+    'title' => t('Get total of clicks on a node'),
+    'field' => [
+      'title' => t('Get total of clicks on a node'),
+      'help' => t('Get total of clicks on a node'),
+      'id' => 'get_total_of_clicks_node',
+    ],
+  ];
+
+  $data['node']['get_total_of_submissions'] = [
+    'title' => t('Get total of submissions'),
+    'field' => [
+      'title' => t('Get total of submissions'),
+      'help' => t('Get total of submissions'),
+      'id' => 'get_total_of_submissions',
+    ],
+  ];
+
+
+  $data['node__field_story_mh2020_resource_tags']['tax_sep_multi_choice_filter'] = [
+    'title' => t('Taxonomy Multiple Choice Separate'),
+    'group' => t('Content'),
+    'filter' => [
+      'title' => t('Taxonomy Multiple Choice Separate'),
+      'help' => t('Taxonomy Multiple Choice Separate'),
+      'id' => 'tax_sep_multi_choice_filter',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_validation_constraint_alter().
+ */
+function obw_utilities_validation_constraint_alter(array &$definitions) {
+  if (isset($definitions['CdnDomain'])) {
+    $definitions['CdnDomain']['class'] = '\\Drupal\\obw_utilities\\Plugin\\Validation\\Constraint\\AlterCdnDomainConstraint';
+  }
+}
+
+/**
+ * Implements hook_preprocess_webform_confirmation().
+ *
+ * @param $vars
+ *
+ * @return mixed
+ */
+function obw_utilities_preprocess_webform_confirmation(&$vars) {
+  $webform = isset($vars['webform']) ? $vars['webform'] : NULL;
+  if (!$webform || ($webform && $webform->get('category') != 'Quick Poll')) {
+    return $vars;
+  }
+  $vars['wf_id'] = $webform->get('id');
+
+  $webform_submission = isset($vars['webform_submission']) ? $vars['webform_submission'] : NULL;
+  if ($webform_submission && $webform_submission->getData()) {
+    $submission_data = $webform_submission->getData();
+    if (isset($submission_data['question'])) {
+      setcookie('obw_poll_question_' . $webform->get('id'), json_encode($submission_data));
+    }
+  }
+
+  return $vars;
+}
+
+/**
+ * @param EntityTypeInterface[] $entity_types
+ */
+function obw_utilities_entity_type_alter(&$entity_types) {
+  if (isset($entity_types['node'])) {
+    $entity_types['node']->setClass('Drupal\obw_utilities\Entity\StoryEntity');
+  }
+}
+
+/**
+ * Implements hook_token_info().
+ */
+function obw_utilities_token_info() {
+  $info['types']['obw_dictionary'] = [
+    'name' => t('Dictionary term'),
+    'description' => t('The definition of the word'),
+  ];
+  $info['tokens']['obw_dictionary']['definition:dictionary_id'] = [
+    'name' => 'Definition word',
+    'description' => 'A token to generate the definition of a word that has been defined in Dictionary taxonomy.',
+  ];
+
+  $info['tokens']['view']['render_block_share_html'] = [
+    'name' => t('Render block share html in view'),
+    'description' => t('Render block share html in view'),
+  ];
+  $info['types']['render_webform'] = [
+    'name' => t('Render webform'),
+    'description' => t('Render webform in a html field'),
+  ];
+  $info['tokens']['render_webform']['id:wf_id'] = [
+    'name' => t('Render the webform by id'),
+    'description' => t('Render the webform by id'),
+  ];
+
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function obw_utilities_tokens($type, $tokens, array $data, array $options, \Drupal\Core\Render\BubbleableMetadata $bubbleable_metadata) {
+  $replacements = [];
+  switch ($type) {
+    case 'obw_dictionary':
+      foreach ($tokens as $name => $original) {
+        $definition = explode(":", $name);
+        if (count($definition) == 2 && $definition[0] == 'definition') {
+          $replacements[$original] = obw_utilities_get_definition($definition[1], $original);
+        }
+      }
+      break;
+    case 'view':
+      foreach ($tokens as $name => $original) {
+        if ($name == 'render_block_share_html') {
+          $view_id = $data['view']->storage->id();
+          $display_id = $data['view']->current_display;
+          $view_title = $data['view']->getTitle();
+          $share_html = PreprocessViewManager::renderShareBlockHtml($view_id, $display_id, $view_title);
+          if ($share_html) {
+            $replacements[$original] = Markup::create($share_html);
+          }
+        }
+      }
+      break;
+    case 'render_webform':
+      foreach ($tokens as $name => $original) {
+        $wf_id = explode(":", $name);
+        if (count($wf_id) == 2 && $wf_id[0] == 'id') {
+          $replacements[$original] = obw_utilities_get_wf_by_id($wf_id[1], $original);
+        }
+      }
+      break;
+  }
+
+  return $replacements;
+}
+
+/**
+ * @param $term_id
+ * @param string $original
+ *
+ * @return FormattableMarkup|string
+ */
+function obw_utilities_get_definition($term_id, $original = '') {
+  $term = Term::load($term_id);
+
+  if (!$term) {
+    return $original;
+  }
+
+  $title = $term->hasField('field_title') ? $term->get('field_title')
+    ->getString() : '';
+  $definition = $term->hasField('field_definition') ? $term->get('field_definition')
+    ->getString() : '';
+  $title_encoded = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $term->getName()), '-')) . uniqid();
+
+  return new FormattableMarkup('<span class="definition-container">
+    <a data-toggle href="#@title_encoded" data-owb-popup="@title_encoded">@name <img src="/themes/custom/obw_theme/images/heart.png" alt="dictionary-icon"></a>
+    <span class="obw-story-body--popup @title_encoded">
+      <span class="obw-story-body--title">@title</span>
+      <span>@definition</span>
+    </span>
+   </span>', [
+    '@name' => $term->getName(),
+    '@title' => $title,
+    '@definition' => $definition,
+    '@title_encoded' => $title_encoded,
+  ]);
+}
+
+function obw_utilities_get_wf_by_id($wf_id, $original = '') {
+  $webform = \Drupal::entityTypeManager()->getStorage('webform')->load($wf_id);
+  if (!$webform) {
+    return $original;
+  }
+  $view_builder = \Drupal::service('entity_type.manager')
+    ->getViewBuilder('webform');
+  $build = $view_builder->view($webform);
+  return render($build);
+}
+
+/**
+ * Implements hook_entity_type_build().
+ */
+function obw_utilities_entity_type_build(array &$entity_types) {
+  $entity_types['node']->setFormClass('story_edit_primary_fields', 'Drupal\node\NodeForm');
+  $entity_types['node']->setFormClass('node_edit_metatags', 'Drupal\node\NodeForm');
+}
+
+/**
+ * Implements hook_entity_operation_alter().
+ */
+function obw_utilities_entity_operation_alter(array &$operations, EntityInterface $entity) {
+  $currentRoute = \Drupal::routeMatch()->getRouteName();
+  if ( $currentRoute == 'system.admin_content' || $currentRoute == 'view.list_page_blog.list_page_blog' || $currentRoute == 'view.list_page_blog.list_page_blog_for_writer' ) {
+    if ($entity->getType() == 'story') {
+      $operations['edit_story_primary_fields'] = [
+        'title' => t('Edit primary fields'),
+        'url' => Url::fromRoute('obw_utilities.node.story_edit_primary_fields_form', [
+          'node' => $entity->id(),
+        ]),
+        'weight' => 11,
+      ];
+
+      if (!empty($entity->field_story_format->getValue()) &&
+        in_array('16', array_column($entity->field_story_format->getValue(), 'value'))) {
+        $operations['edit']['title'] = t('Edit');
+        $operations['edit']['url'] = Url::fromRoute('obw_utilities.node.edit_new_blog_post', [
+          'node' => $entity->id(),
+        ]);
+        unset($operations['edit_story_primary_fields']);
+      }
+
+    }
+
+    if ($entity->hasField('field_metatags')) {
+      $operations['edit_node_metatags'] = [
+        'title' => t('Edit metatags'),
+        'url' => Url::fromRoute('obw_utilities.node.edit_metatags_form', [
+          'node' => $entity->id(),
+          //          'form_mode_id' => 'node_edit_metatags'
+        ]),
+        'weight' => 12,
+      ];
+    }
+
+  }
+}
+
+function obw_utilities_contextual_links_alter(array &$links, $group, array $route_parameters) {
+  if (!empty($route_parameters['node'])) {
+    $node = \Drupal::entityTypeManager()
+      ->getStorage('node')
+      ->load($route_parameters['node']);
+    if ($node) {
+      if ($node->getType() == 'story') {
+        $links['obw_utilities.node.story_edit_primary_fields_form'] = [
+          'route_name' => 'obw_utilities.node.story_edit_primary_fields_form',
+          'route_parameters' => $route_parameters,
+          'title' => t('Edit primary fields'),
+          'weight' => NULL,
+          'localized_options' => [],
+          'metadata' => [
+            'changed' => $node->get('changed')->value,
+            'langcode' => $node->get('langcode')->value,
+          ],
+        ];
+
+        if (!empty($node->field_story_format->getValue()) &&
+          in_array('16', array_column($node->field_story_format->getValue(), 'value'))) {
+          $links['entity.node.edit_form'] = [
+            'route_name' => 'obw_utilities.node.edit_new_blog_post',
+            'route_parameters' => $route_parameters,
+            'title' => t('Edit'),
+            'weight' => NULL,
+            'localized_options' => [],
+            'metadata' => [
+              'changed' => $node->get('changed')->value,
+              'langcode' => $node->get('langcode')->value,
+            ],
+          ];
+        }
+      }
+      if ($node->hasField('field_metatags')) {
+        $links['obw_utilities.node.edit_metatags_form'] = [
+          'route_name' => 'obw_utilities.node.edit_metatags_form',
+          'route_parameters' => $route_parameters,
+          'title' => t('Edit metatags'),
+          'weight' => NULL,
+          'localized_options' => [],
+          'metadata' => [
+            'changed' => $node->get('changed')->value,
+            'langcode' => $node->get('langcode')->value,
+          ],
+        ];
+      }
+    }
+  }
+}
+
+function obw_utilities_metatags_alter(array &$metatags, array &$context) {
+  $current_path = \Drupal::service('path.current')->getPath();
+  if (preg_match('/node\/(\d+)/', $current_path, $matches)) {
+    $node = Node::load($matches[1]);
+    if ($node instanceof NodeInterface && $node->getType() == 'landing_page' && !empty(\Drupal::request()->query->get('author'))) {
+      $landing_format = PreprocessNodeManager::getNodeFormat('landing');
+      if (!empty($node->field_landing_format->getValue())) {
+        if ($landing_format[$node->field_landing_format->getValue()[0]['value']] == 'obw_birthday_2021') {
+          global $base_url;
+          $title = 'Our Values in Action';
+          $desc = 'We asked our community what our values meant to them. This was what they shared. Read their stories, or submit your own.';
+          $url = $base_url . \Drupal::request()->getRequestUri();
+
+          $metatags['description'] = $desc;
+          $metatags['og_title'] = $title;
+          $metatags['og_description'] = $desc;
+          $metatags['og_url'] = $url;
+          $metatags['twitter_cards_title'] = $title;
+          $metatags['twitter_cards_description'] = $desc;
+          $metatags['twitter_cards_page_url'] = $url;
+          $metatags['pinterest_description'] = $desc;
+          $metatags['pinterest_url'] = $url;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update().
+ */
+function obw_utilities_node_update(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() == 'node') {
+    if ($entity->type->target_id == 'story') {
+      if (!empty($entity->field_story_call_to_actions->getValue())) {
+        foreach ($entity->field_story_call_to_actions->getValue() as $cta) {
+          $node = Node::load($cta['target_id']);
+          if ($node instanceof NodeInterface) {
+            if ($node->hasField('field_cta_reference_story')) {
+              $node->field_cta_reference_story->target_id = $entity->id();
+              $node->save();
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert().
+ */
+function obw_utilities_node_insert(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() == 'node') {
+    if ($entity->type->target_id == 'story') {
+      if (!empty($entity->field_story_call_to_actions->getValue())) {
+        foreach ($entity->field_story_call_to_actions->getValue() as $cta) {
+          $node = Node::load($cta['target_id']);
+          if ($node instanceof NodeInterface) {
+            if ($node->hasField('field_cta_reference_story')) {
+              $node->field_cta_reference_story->target_id = $entity->id();
+              $node->save();
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function obw_utilities_form_node_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $node = $form_state->getFormObject()->getEntity();
+  if ($node->getType() != 'landing_page') {
+    return;
+  }
+
+  if ((empty($form_state->getUserInput())
+      && !empty($form['field_landing_format']['widget']['#default_value'][0])
+      && $form['field_landing_format']['widget']['#default_value'][0] == 12)
+    || (!empty($form_state->getUserInput()['field_landing_format'])
+      && $form_state->getUserInput()['field_landing_format'] == 12)) {
+    $exclude_nids = '';
+    if (!empty($form['field_story_sub_stories']['widget']['selected']['#items'])) {
+      $selected_items = $form['field_story_sub_stories']['widget']['selected']['#items'];
+      $exclude_nids = array_column(array_column($selected_items, '#wrapper_attributes'), 'data-id');
+    }
+    $field_key = 'node_landing_page_field_story_sub_stories_' . $node->id();
+    $form['field_story_sub_stories']['widget']['available']['#items'] = load_articles_by_format($field_key, 'story', REFUGEE_STORY_FORMAT, STORY_TYPE, $exclude_nids);
+
+    if (!empty($form['field_landing_blogs']['widget']['selected']['#items'])) {
+      $selected_items = $form['field_landing_blogs']['widget']['selected']['#items'];
+      $exclude_nids = array_column(array_column($selected_items, '#wrapper_attributes'), 'data-id');
+    }
+    $field_key = 'node_landing_page_field_landing_blogs_' . $node->id();
+    $form['field_landing_blogs']['widget']['available']['#items'] = load_articles_by_format($field_key, 'story', REFUGEE_STORY_FORMAT, BLOG_TYPE, $exclude_nids);
+
+  }
+
+  $form['#prefix'] = '<div id="form-landing-ajax-wrapper">';
+  $form['#suffix'] = '</div>';
+
+  $form['field_landing_format']['widget']['#ajax'] = [
+    'callback' => '_obw_utilities_load_articles_by_format',
+    'event' => 'change',
+    'wrapper' => 'form-landing-ajax-wrapper',
+    'progress' => [
+      'type' => 'throbber',
+      'message' => t('Loading stories by format...'),
+    ],
+  ];
+  return $form;
+}
+
+function _obw_utilities_load_articles_by_format(&$form, $form_state) {
+  return $form;
+}
+
+function load_articles_by_format($field_key, $node_type, $story_format_type, $article_type, $exclude_nids) {
+  $entity_query = \Drupal::service('obw_utilities.entity_query');
+  $result = $entity_query->loadStoriesByFormat($node_type, $story_format_type, $article_type, $exclude_nids);
+  $list_articles = [];
+  if (!empty($result)) {
+    foreach ($result as $item) {
+      $article_option = [
+        '#wrapper_attributes' => [
+          'data-key' => $field_key,
+          'data-id' => $item->nid,
+          'data-label' => FieldFilteredMarkup::create($item->title),
+        ],
+        '#markup' => FieldFilteredMarkup::create($item->title),
+      ];
+      $list_articles[] = $article_option;
+    }
+  }
+  return $list_articles;
+}
+
+/**
+ * Implements hook_pathauto_pattern_alter().
+ */
+function obw_utilities_pathauto_pattern_alter(PathautoPatternInterface $pattern, array $context) {
+  if (isset($context['bundle']) && $context['bundle'] === 'story') {
+    if (
+      $context['data'] &&
+      $context['data']['node'] &&
+      $context['data']['node'] instanceof StoryEntity &&
+      !empty($context['data']['node']->field_story_format->getValue()) &&
+      in_array('16', array_column($context['data']['node']->field_story_format->getValue(), 'value'))
+    ) {
+      $pattern->setPattern('blog/[node:title]');
+    }
+
+  }
+}
+
+/**
+ * Implements hook_views_query_alter().
+ */
+function obw_utilities_views_query_alter(ViewExecutable $view, QueryPluginBase $query) {
+  if (
+    $view->current_display == 'block_mental_health_2020_resouces_for_year_2' ||
+    $view->current_display == 'block_mental_health_2020_resouces_for_year_1') {
+
+    $landing_condition = [['operator' => 'formula']];
+    $stored_filter = [];
+    $stored_key_filter = FALSE;
+    foreach ($query->where as $parent_key => &$conditions) {
+      foreach ($conditions['conditions'] as $key => $condition) {
+        if (strpos($condition['field'], 'field_landing_resource_stories_node_field_data.nid') !== FALSE) {
+          $conditions['type'] = 'OR';
+          unset($conditions['conditions'][$key]);
+          $landing_condition[0]['field'] = $condition['field'];
+          $landing_condition[0]['value'] = $condition['value'];
+          $stored_key_filter = $parent_key;
+        }
+        else {
+          if (strpos($condition['field'], 'node__field_story_mh2020_resource_tags.field_story_mh2020_resource_tags_target_id') !== FALSE) {
+            $tmp_value_filter = array_values($condition['value']);
+            $stored_filter[] = reset($tmp_value_filter);
+          }
+        }
+      }
+    }
+    $args = ['conditions' => $landing_condition, 'args' => [], 'type' => 'AND'];
+    $query->where[] = $args;
+    if ($view->current_display == 'block_mental_health_2020_resouces_for_year_2') {
+      if (!empty($stored_filter)) {
+        if (!in_array(1, $view->exposed_raw_input['field_story_mh2020_resource_tags_target_id'])) {
+          if (is_numeric($stored_key_filter)) {
+            $query->where[$stored_key_filter]['conditions'][] = [
+              'field' => 'node__field_mh2021_tag_2.field_mh2021_tag_2_target_id IN(:tids[])',
+              'value' => [':tids[]' => $stored_filter],
+              'operator' => 'formula',
+            ];
+          }
+        }
+      }
+      if (isset($view->exposed_raw_input['field_story_mh2020_resource_tags_target_id'])) {
+        $filter_input = $view->exposed_raw_input['field_story_mh2020_resource_tags_target_id'];
+        if (count($filter_input) == 2 && count((array_intersect($filter_input, [
+            3,
+            4,
+          ]))) == 2) {
+          foreach ($query->orderby as $order_key => $orderby) {
+            if ($orderby['field'] == 'taxonomy_term_field_data_node__field_story_mh2020_resource_t') {
+              unset($query->orderby[$order_key]);
+            }
+          }
+        }
+        elseif (count($filter_input) == 1 && count((array_intersect($filter_input, [
+            3,
+            4,
+          ]))) == 1) {
+          foreach ($query->orderby as $order_key => $orderby) {
+            if ($orderby['field'] == 'taxonomy_term_field_data_node__field_story_mh2020_resource_t') {
+              unset($query->orderby[$order_key]);
+            }
+          }
+        }
+        else {
+          foreach ($query->orderby as $order_key => $orderby) {
+            if ($orderby['field'] == 'taxonomy_term_field_data_node__field_mh2021_sub_tag_1_weight') {
+              unset($query->orderby[$order_key]);
+            }
+          }
+        }
+      }
+    }
+    else {
+      if (!empty($stored_filter)) {
+        if (!in_array(1, $view->exposed_raw_input['field_story_mh2020_resource_tags_target_id_1'])) {
+          if (is_numeric($stored_key_filter)) {
+            $query->where[$stored_key_filter]['conditions'][] = [
+              'field' => 'node__field_mh2021_tag_2.field_mh2021_tag_2_target_id IN(:tids[])',
+              'value' => [':tids[]' => $stored_filter],
+              'operator' => 'formula',
+            ];
+          }
+        }
+      }
+    }
+  }
+  if ($view->current_display == 'mh2021_resources_help') {
+    $tmp = [
+      'node__field_story_format.field_story_format_value = :node__field_story_format_field_story_format_value',
+      'node__field_story_using_years_template.field_story_using_years_template_value IN(:node__field_story_using_years_template_field_story_using_years_template_value[])',
+      'node__field_story_mh2020_type.field_story_mh2020_type_value IN(:node__field_story_mh2020_type_field_story_mh2020_type_value[])',
+    ];
+    $moving_condition = [];
+    $i = 0;
+
+    foreach ($query->where as &$conditions) {
+      foreach ($conditions['conditions'] as $key => $condition) {
+        if (in_array($condition['field'], $tmp)) {
+          $conditions['type'] = 'OR';
+          unset($conditions['conditions'][$key]);
+          $moving_condition[$i]['field'] = $condition['field'];
+          $moving_condition[$i]['value'] = $condition['value'];
+          $moving_condition[$i]['operator'] = 'formula';
+          $i++;
+        }
+        elseif ($condition['field'] == 'node__field_story_mh2020_resource_tags.field_story_mh2020_resource_tags_target_id = :node__field_story_mh2020_resource_tags_field_story_mh2020_resource_tags_target_id') {
+          $conditions['conditions'][$key + 1]['field'] = 'node__field_mh2021_tag_2.field_mh2021_tag_2_target_id = :tid';
+          $conditions['conditions'][$key + 1]['value'] = [':tid' => $conditions['conditions'][$key]['value'][':node__field_story_mh2020_resource_tags_field_story_mh2020_resource_tags_target_id']];
+          $conditions['conditions'][$key + 1]['operator'] = 'formula';
+        }
+      }
+    }
+    $args = ['conditions' => $moving_condition, 'args' => [], 'type' => 'AND'];
+    $query->where[] = $args;
+
+    foreach ($query->orderby as $order_key => $orderby) {
+      if (in_array($view->exposed_raw_input['field_story_mh2020_resource_tags_target_id'], [
+        3,
+        4,
+      ])) {
+        if ($orderby['field'] == 'taxonomy_term_field_data_node__field_story_mh2020_resource_t') {
+          unset($query->orderby[$order_key]);
+        }
+      }
+      else {
+        if ($orderby['field'] == 'taxonomy_term_field_data_node__field_mh2021_sub_tag_1_weight') {
+          unset($query->orderby[$order_key]);
+        }
+      }
+    }
+
+  }
+}
+
+function obw_utilities_views_pre_render(ViewExecutable $view) {
+
+  //@TODO refactor to obw_search if have more feature
+  //@TODO find solution to remove hardcode view id
+  if ($view->id() == 'search') {
+    if (!empty($view->exposed_data['keyword'])) {
+      $view->exposed_widgets['form_title'] = ['#markup' => t('Search results')];
+      if (intval($view->total_rows) > 0) {
+        $string_translation = \Drupal::service('string_translation');
+        $total = $string_translation->formatPlural($view->total_rows, '1 result', '@count results');
+        $view->exposed_widgets['summary'] = [
+          '#markup' => t('Showing @total for “@keyword”', [
+            '@total' => $total,
+            '@keyword' => $view->exposed_data['keyword'],
+          ]),
+        ];
+      }
+      else {
+        $view->exposed_widgets['summary'] = ['#markup' => t('Sorry, nothing matched your search. Please try again.')];
+      }
+    }
+    else {
+      $view->exposed_widgets['form_title'] = [
+        '#markup' => t('Search'),
+      ];
+
+    }
+  }
+  if (!empty($view) && ($view->current_display == 'humankind_campaign' || $view->current_display == 'page_humankind_apr')) {
+    $view->element['#attached']['library'][] = 'obw_admin_theme/magnific-popup';
+    $view->element['#attached']['library'][] = 'obw_utilities/update-wf-submission';
+  }
+}
+
+/**
+ * Implements hook_views_post_render().
+ */
+function obw_utilities_views_post_render(ViewExecutable $view, &$output, CachePluginBase $cache) {
+  if ($view->current_display == 'block_mental_health_2020_resouces_for_year_2') {
+    $filter_input = $view->exposed_raw_input['field_story_mh2020_resource_tags_target_id'];
+    if (!in_array(1, $filter_input) && !empty($output['#rows'])) {
+      $tmp_args_child = [
+        'Helplines' => [],
+        'Supporting Myself' => [
+          'General' => [],
+          'Suicide' => [],
+          'Caregiver' => [],
+        ],
+        'Supporting Others' => [
+          'General' => [],
+          'Suicide' => [],
+          'Caregiver' => [],
+        ],
+        'COVID-19' => [],
+        'General' => [],
+      ];
+      $parent_tmp = ['Supporting Myself', 'Supporting Others'];
+      $compare_args = [
+        1 => 'All',
+        2 => 'Helplines',
+        3 => 'Supporting Myself',
+        4 => 'Supporting Others',
+        5 => 'COVID-19',
+        6 => 'General',
+      ];
+      foreach ($compare_args as $c_k => $c_value) {
+        if (!in_array($c_k, $filter_input)) {
+          unset($compare_args[$c_k]);
+        }
+      }
+      foreach ($tmp_args_child as $f_k => $f_value) {
+        if (!in_array($f_k, $compare_args)) {
+          unset($tmp_args_child[$f_k]);
+        }
+      }
+
+      foreach ($output['#rows'] as $parent_value) {
+        foreach ($parent_value['#rows'] as $r) {
+          $tag_1 = $r['#node']->field_story_mh2020_resource_tags->entity->name->value;
+          $tag_2 = $r['#node']->field_mh2021_tag_2->entity ? $r['#node']->field_mh2021_tag_2->entity->name->value : NULL;
+          $sub_tag = $r['#node']->field_mh2021_sub_tag_1->entity ? $r['#node']->field_mh2021_sub_tag_1->entity->name->value : NULL;
+          if (isset($tmp_args_child[$tag_1])) {
+            if (in_array($tag_1, $parent_tmp)) {
+              if ($sub_tag) {
+                $tmp_args_child[$tag_1][$sub_tag][] = $r;
+                continue;
+              }
+            }
+            else {
+              $tmp_args_child[$tag_1][] = $r;
+              continue;
+            }
+
+          }
+          if ($tag_2 && isset($tmp_args_child[$tag_2])) {
+            if (in_array($tag_2, $parent_tmp)) {
+              if ($sub_tag) {
+                $tmp_args_child[$tag_2][$sub_tag][] = $r;
+              }
+            }
+            else {
+              $tmp_args_child[$tag_2][] = $r;
+            }
+          }
+        }
+      }
+
+      $format_label = [
+        'General' => Drupal\Core\Render\Markup::create(''),
+        'Suicide' => Drupal\Core\Render\Markup::create('Suicide'),
+        'Caregiver' => Drupal\Core\Render\Markup::create('Caregiver'),
+        'Supporting Myself' => Drupal\Core\Render\Markup::create('Supporting Myself'),
+        'Supporting Others' => Drupal\Core\Render\Markup::create('Supporting Others'),
+      ];
+
+      //Get default format template render.
+      $count = 0;
+      $count_child = 0;
+      unset($output['#rows'][0]['#rows']);
+      unset($output['#rows'][0]['#title']);
+      $tmp_parent_args = $output['#rows'][0];
+      $output['#rows'] = [];
+      foreach ($tmp_args_child as $format_key => $format_value) {
+        if (!in_array($format_key, $parent_tmp)) {
+          if (!empty($format_value)) {
+            $output['#rows'][$count] = $tmp_parent_args;
+            $output['#rows'][$count]['#title'] = $format_key;
+            $output['#rows'][$count]['#rows'] = $format_value;
+          }
+        }
+        else {
+          $has_child = FALSE;
+          foreach ($format_value as $child_value) {
+            if (!empty($child_value)) {
+              $has_child = TRUE;
+            }
+          }
+          if ($has_child) {
+            $output['#rows'][$count] = $tmp_parent_args;
+            $output['#rows'][$count]['#title'] = $format_label[$format_key];
+            foreach ($format_value as $c_k => $c_v) {
+              if (!empty($c_v)) {
+                $output['#rows'][$count]['#rows'][$count_child] = $tmp_parent_args;
+                $output['#rows'][$count]['#rows'][$count_child]['#rows'] = $c_v;
+                $output['#rows'][$count]['#rows'][$count_child]['#title'] = $format_label[$c_k];
+                $count_child++;
+              }
+            }
+          }
+        }
+        $count++;
+      }
+
+    }
+
+  }
+
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert().
+ */
+function obw_utilities_webform_submission_insert(Drupal\Core\Entity\EntityInterface $entity) {
+  if (!empty($entity->getWebForm()->id())) {
+    switch ($entity->getWebForm()->id()) {
+      case 'support_us_tax_form':
+        $key_param = \Drupal::requestStack()->getCurrentRequest()->get('key');
+        if (!empty($key_param)) {
+          $array_submission = EntityQuery::getSubmissionIDByKey($key_param);
+          $submission = end($array_submission);
+          if (!empty($submission) && !is_null($submission)) {
+            $webform_submission = WebformSubmission::load($submission->sid);
+            if (!is_null($webform_submission->getElementData('email'))) {
+              $ws_data = $webform_submission->getData();
+              $entity->setElementData('email', $webform_submission->getElementData('email'));
+              $entity->setElementData('is_a_monthly_donation', $ws_data['is_a_monthly_donation']);
+              $entity->setElementData('country', $ws_data['country']);
+              $entity->setElementData('is_total_donation_less_than_50', 0);
+              $entity->save();
+            }
+            $webform_submission->delete();
+          }
+        }
+        break;
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function obw_utilities_user_presave(EntityInterface $entity) {
+  if ($entity->get('name') && empty($entity->get('name')->getValue())) {
+    $first_name = array_column($entity->get('field_account_first_name')
+      ->getValue(), 'value');
+    $last_name = array_column($entity->get('field_account_last_name')
+      ->getValue(), 'value');
+    $name = reset($first_name) . reset($last_name);
+    $user = user_load_by_name($name);
+    if (!$user) {
+      $entity->set('name', $name);
+      $entity->set('status', 1);
+    }
+    else {
+      $new_name = $name;
+      while(user_load_by_name($new_name)){
+        $new_name = $name . rand(0, 9999);
+      }
+      $entity->set('name', $new_name);
+      $entity->set('status', 1);
+    }
+
+  }
+}

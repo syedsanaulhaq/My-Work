@@ -1,0 +1,122 @@
+<?php
+
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+
+
+
+/**
+* Implements hook_ENTITY_TYPE_view() for node entities.
+*/
+function obw_zoom_node_view(
+  array &$build,
+  EntityInterface $node,
+  EntityViewDisplayInterface $display,
+  $view_mode) {   
+  if ($node->bundle() == 'event' && $view_mode == 'full') {   
+    $zoom_config = Drupal::config('obw_zoom.config'); 
+    if ($node->field_everyone_can_access->value == 1) {         
+      $apiKey = $zoom_config->get('obw_zoom_api_key');
+      $apiSecret = $zoom_config->get('obw_zoom_secret_key');
+      $meeting_number = $zoom_config->get('obw_zoom_mn');
+      $roles = $zoom_config->get('obw_zoom_roles');    
+      $url_node = $node->toUrl()->toString();
+      
+      if ( \Drupal::currentUser()->isAnonymous()) {        
+        $build['meeting_render_section'] = [
+          '#attached' => [
+            'library' => [
+              'obw_zoom/obw-zoom-not-login',
+            ],
+          ]
+        ];        
+      } else { 
+        $build['meeting_render_section'] = [
+          //'#markup' => '<div id="meetingSDKElements"></div>',
+          '#attached' => [
+            'library' => [
+              'obw_zoom/obw-zoom-webinar',             
+            ],
+            'drupalSettings' => [
+              'apiKey' => $apiKey,
+              'apiSecret' => $apiSecret, 
+              'mn' => $meeting_number,
+              'name' => $node->title->value,
+              'email' => Drupal::currentUser()->getEmail(),
+              'pwd' => $zoom_config->get('obw_zoom_pwd'),
+              'role' => $zoom_config->get('obw_zoom_roles'),
+              'signature' => $zoom_config->get('obw_zoom_signature'),            
+              'china' => $zoom_config->get('obw_zoom_area'),
+              'lang' => $zoom_config->get('obw_zoom_lang'),
+              'url_node' => $url_node,
+              'version' => '2.4.5',
+            ],
+          ],
+        ];   
+      }     
+    }    
+  }
+  if ($node->bundle() == 'page' && $view_mode == 'full') {   
+    if (isset($node->field_basic_format->value) == 6 && !empty($node->field_basic_format->value)) {
+      $output = '';
+      $zoom_config = \Drupal::config('obw_discord.discordconfig');
+      $discord_server = $zoom_config->get('discord_server');
+      $discord_channel = $zoom_config->get('discord_channel'); 
+      $output .= '<widgetbot server="'.$discord_server.'" channel="'.$discord_channel.'" width="100%" height="600"></widgetbot>';       
+      $build['discord_details'] = array(
+        '#markup' => $output ,
+        '#prefix' => '<div class="col-md-12">',
+        '#suffix' => '</div>' ,             
+        '#allowed_tags' => ['widgetbot'],
+        '#attached' => [
+          'library' => [
+            'obw_discord/discord',
+          ],
+        ]   
+      );        
+    }     
+  }
+
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function obw_zoom_theme($existing, $type, $theme, $path)  {
+  $zoom_config = Drupal::config('obw_zoom.config');
+  $discord_server = $zoom_config->get('discord_server');
+  $discord_channel = $zoom_config->get('discord_channel'); 
+  return [
+    'custom_zoom_jwt_page' => [
+      'variables' => [
+        'subject' => NULL,
+        'date_start' => NULL,
+        'date_end' => NULL,
+        'details' => NULL,
+        'locations' => NULL,
+        'id_event' => NULL,
+      ],
+    ],
+    'custom_zoom_webinar_page' => [
+      'variables' => [
+        'subject' => NULL,
+        'date_start' => NULL,
+        'date_end' => NULL,
+        'details' => NULL,
+        'discord_server' => $discord_server,
+        'discord_channel' => $discord_channel,
+      ],
+    ],    
+    'custom_zoom_meeting_page' => [
+      'variables' => [
+        'subject' => NULL,
+        'date_start' => NULL,
+        'date_end' => NULL,
+        'details' => NULL,
+        'discord_server' => $discord_server,
+        'discord_channel' => $discord_channel,
+      ],
+    ],  
+  ];
+}

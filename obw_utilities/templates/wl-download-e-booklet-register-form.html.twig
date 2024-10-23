@@ -1,0 +1,60 @@
+{#
+/**
+ * @file
+ * Theme override for a 'form' element.
+ *
+ * Available variables
+ * - attributes: A list of HTML attributes for the wrapper element.
+ * - children: The child elements of the form.
+ *
+ * @see template_preprocess_form()
+ */
+#}
+
+<div id="user-action-register" class="user-action pt-25 {{ form['#obw-campaign'] }}">
+  <div class="container">
+    <div class="title pb-15">
+      <h3>{{ 'Download Your E-story Here' | t }}</h3>
+      <p>{{ 'Sign up to get your special edition wildlife download.<br/>Already a member?' |t }} <a id="open-signup" href="javascript:void(0);" onclick ="FormLoginRedirectLink('login', '?destination={{- form['#obw_destination']['#value'] | render -}}' )">{{ 'Login here' | t  }}</a></p>
+      <div class="close-form">
+        <i class="fal fa-times"></i>
+      </div>
+    </div>
+    <div class="form-wrapper pb-30">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="js-form-type-textfield form-item obw-custom-form">
+            {{ form.field_account_first_name }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="js-form-type-textfield form-item obw-custom-form">
+            {{ form.field_account_last_name }}
+          </div>
+        </div>
+      </div>
+      <div class="js-form-type-textfield form-item form-item-mail obw-custom-form">
+        {{ form.account.mail }}
+        <div style="display: none">{{ form.account.name }}</div>
+      </div>
+      <div class="js-form-type-textfield form-item">
+        {{ form.account.pass }}
+      </div>
+      {{ form.account | without('mail','name', 'pass') }}
+      {{ form.obw_subscribe_radios }}
+      {{ form.field_account_accept_tnc }}
+      <div class="form-actions form-group text-center">
+        {{ form.captcha }}
+        {{ form.actions }}
+      </div>
+    </div>
+  </div>
+
+  {{ form | without('account', 'user_picture', 'message', 'actions', 'captcha', 'contact',
+    'language', 'timezone', 'path', 'field_account_first_name', 'field_account_last_name',
+    'field_account_nationality', 'field_account_city_of_residence',
+    'field_account_news_subscribed', 'field_account_accept_tnc','field_account_signup_url',
+    'field_account_signup_source', 'field_gsoty_story_id', 'field_account_options_subscribe',
+    'obw_subscribe_radios'
+  ) }}
+</div>

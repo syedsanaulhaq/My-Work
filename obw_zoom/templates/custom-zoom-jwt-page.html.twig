@@ -1,0 +1,14 @@
+{% if logged_in %}
+  <div id="meetingSDKElements"></div>
+  
+{% else %}
+  <div class="page-zoom-login text-center">
+    <div class="container">
+      <h1>OBW Virtual Event</h1>
+      <p>You will have to log in to our website before joining in our virtual event</p>
+      <p>
+        <a id="open-signup" href="javascript:void(0);" onclick="FormLoginRedirectLink('login', '?destination=%2Fevents%2Fzoom' )">Log in here</a>        
+      </p>
+    </div>
+  </div>
+{% endif %}

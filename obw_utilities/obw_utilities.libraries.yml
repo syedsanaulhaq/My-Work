@@ -1,0 +1,170 @@
+all-form:
+  version: 1.x
+  css:
+    theme:
+      css/form.css: { }
+
+call-to-action-form:
+  version: 1.x
+  js:
+    js/function-form.js: { }
+    js/call-to-action-form.js: { }
+
+city-country:
+  version: 1.x
+  js:
+    js/city-country.js: { }
+
+story-form:
+  version: 1.x
+  js:
+    js/function-form.js: { }
+    js/story-form.js: { }
+
+register-form:
+  version: 1.x
+  js:
+    js/city-country.js: { }
+  dependencies:
+    - core/jquery
+
+media-entity-browser-view:
+  version: 1.x
+  js:
+    js/media-entity-browser.view.js: { }
+
+entityreference_dragdrop:
+  version: 1.x
+  js:
+    js/entityreference_dragdrop.js: { }
+
+form_action_button:
+  version: 1.x
+  js:
+    js/obw_utilities.form_action_button.js: { }
+
+form-contact-us:
+  version: 1.x
+  js:
+    js/check-input.js: { }
+
+form-user-profile:
+  version: 1.x
+  js:
+    js/check-input.js: { }
+
+form-password-profile:
+  version: 1.x
+  js:
+    js/check-input.js: { }
+
+form-volunteer-signup:
+  version: 1.x
+  js:
+    js/check-input.js: { }
+
+form-submission-volunteer:
+  version: 1.x
+  js:
+    js/check-input.js: { }
+
+form-submission-support-us:
+  version: 1.x
+  js:
+    js/check-input.js: { }
+
+obw-add-to-event:
+  css:
+    theme:
+      css/add-to-event-button.css: { }
+  js:
+    js/obw-add-to-event.js: { }
+come-back-prev-page:
+  version: 1.x
+  js:
+    js/come-back-prev-page.js: { }
+update-wf-submission:
+  version: 1.x
+  js:
+    js/update-wf-submission.js: { }
+  css:
+    theme:
+      css/update-wf-submission.css: { }
+
+# vendor library
+vendor-swiper:
+  version: 4.5.0
+  css:
+    theme:
+      css/vendor/swiper.min.css: { preprocess: true }
+  js:
+    js/vendor-min/swiper.min.js: { weight: -1 }
+vendor-swiper-6.4.0:
+  version: 6.4.0
+  css:
+    theme:
+      css/vendor/swiper-6.4.0/swiper.css: { preprocess: true }
+  js:
+    js/vendor/swiper-6.4.0/swiper.js: { weight: -1 }
+
+vendor-select2:
+  version: 4.0.7
+  js:
+    js/vendor-min/select2.full.min.js: { weight: -1 }
+
+vendor-fancybox:
+  version: 3.5.7
+  css:
+    theme:
+      css/vendor/jquery.fancybox.min.css: { preprocess: true }
+  js:
+    js/vendor-min/jquery.fancybox.min.js: { weight: -1 }
+
+vendor-slick:
+  version: 1.9.0
+  css:
+    theme:
+      css/vendor/slick.css: { }
+  js:
+    js/vendor-min/slick.min.js: { weight: -1 }
+
+vendor-magnific-popup:
+  version: 1.1.0
+  css:
+    theme:
+      css/vendor/magnific-popup.css: { }
+  js:
+    js/vendor-min/jquery.magnific-popup.min.js: { weight: -1 }
+admin-toolbar-search:
+  version: 1.x
+  css:
+    theme:
+      css/admin-toolbar-search.css: { }
+
+obw-webform-fields-condition:
+  js:
+    js/webform-fields-condition.js: { }
+
+obw-webform-fields-edit-css:
+  version: 1.x
+  css:
+    theme:
+      css/webform-edit-css.css: { }
+
+obw-webform-download-2021-creature:
+  js:
+    js/webform-download-2021-creature.js: { }
+    js/jquery.cookie.js: { }
+  css:
+    theme:
+      css/webform-download-2021-creature.css: { }
+
+obw-webform-download-2021-creature-download:
+  js:
+    js/webform-download-2021-creature-first-time-download.js: { }
+
+obw-blog-post-css:
+  version: 1.x
+  css:
+    theme:
+      css/obw-blog-post-css.css: { }

@@ -1,0 +1,242 @@
+{#
+/**
+ * @file
+ * Theme override for a 'form' element.
+ *
+ * Available variables
+ * - attributes: A list of HTML attributes for the wrapper element.
+ * - children: The child elements of the form.
+ *
+ * @see template_preprocess_form()
+ */
+#}
+{% if form['#admin_mode'] %}
+    <div id="user-action-register" class="user-action pt-25 {{ form['#obw-campaign'] }}">
+        <div class="container">
+
+            <div class="row align-items-center">
+                <div class="col-md-6">
+
+                    <div class="form-wrapper pb-30">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="js-form-type-textfield form-item obw-custom-form">
+                                    {{ form.field_account_first_name }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="js-form-type-textfield form-item obw-custom-form">
+                                    {{ form.field_account_last_name }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="js-form-type-textfield form-item obw-custom-form">
+                            {{ form.account.mail }}
+                            <div style="display: none">{{ form.account.name }}</div>
+                        </div>
+                        <div class="js-form-type-textfield form-item">
+                            {{ form.account.pass }}
+                        </div>
+                        {{ form.account | without('mail','name', 'pass') }}
+                        {{ form.field_account_news_subscribed }}
+                        {{ form.field_account_accept_tnc }}
+                        <div class="form-actions form-group text-center">
+                            {{ form.captcha }}
+                            {{ form.actions }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{ form | without('account', 'user_picture', 'message', 'actions', 'captcha', 'contact',
+            'language', 'timezone', 'path', 'field_account_first_name', 'field_account_last_name',
+            'field_account_nationality', 'field_account_city_of_residence',
+            'field_account_news_subscribed', 'field_account_accept_tnc','field_account_signup_url','field_account_signup_source', 'field_gsoty_story_id'
+        ) }}
+    </div>
+{% else %}
+    <div id="user-action-register" class="user-action pt-25 {{ form['#obw-campaign'] }}">
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-6 mobile">
+              {% if form['#src'] is defined %}
+                <div class="join-our-company">
+                  <h3>Join our community!</h3>
+                  <div class="img">
+                    <img width="180" src="/{{ base_path ~ directory }}/images/obw-sign-up.jpg" alt="OBW Signup Image">
+                  </div>
+                  <div class="community-member">
+                    <p>As a community member, you can: </p>
+                    <ul>
+                      <li>
+                        <div class="icon"><i class="fas fa-book-heart"></i></div>Be a Better Traveller: Create lists of your travel for good favourites, and swap tips in our Community Forum
+                      </li>
+                      <li>
+                        <div class="icon"><i class="fas fa-comments-alt"></i></div>Follow Our Better World's stories: get updates and be informed of their impact
+                      </li>
+                      <li>
+                        <div class="icon"><i class="fas fa-hand-heart"></i></div>Take action more easily and eventually track your personal impact
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              {% else %}
+                {% if form['#override_right_column_signup'] is defined %}
+                {{ form['#override_right_column_signup'] | raw }}
+                {% else %}
+                    <div class="join-our-company">
+                        <h3>Join our community!</h3>
+                        <div class="img">
+                            <img width="180" src="/{{ base_path ~ directory }}/images/obw-sign-up.jpg" alt="OBW Signup Image">
+                        </div>
+                        <div class="community-member">
+                            <p>As a community member, you can: </p>
+                            <ul>
+                                <li>
+                                    <div class="icon"><i class="fas fa-book-heart"></i></div>Follow stories: get updates and be informed of their impact
+                                </li>
+                                <li>
+                                    <div class="icon"><i class="fas fa-comments-alt"></i></div>Join the conversation: <i class="fas fa-heart"></i> a story, comment and share ideas
+                                </li>
+                                <li>
+                                    <div class="icon"><i class="fas fa-hand-heart"></i></div>Take action more easily and eventually track your personal impact
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+                {% if form['#obw_social_register'] is not defined %}
+                <div class="title pb-15">
+                    {% if form['#obw_gsoty_register'] is defined %}
+                        <h3>{{ form['#obw_gsoty_register'] | render }}</h3>
+                    {% else %}
+                        <h3>{{ 'Sign up' | t }}</h3>
+                    {% endif %}
+                    <p>{{ 'Join the Our Better World community' | t }}</p>
+                    {{ form.message }}
+                </div>
+                <div class="social-login">
+                    <a href="/user/login/facebook?destination={{ form['#obw_destination']['#value'] | render   }}" class="facebook"><i class="fab fa-facebook"></i> {{ 'Sign up with Facebook' | t }}</a>
+                    <a href="/user/login/google?destination={{ form['#obw_destination']['#value'] | render   }}" class="google"><i class="fab fa-google"></i> {{ 'Sign up with Google' | t }}</a>
+                    <a href="/user/login/twitter?destination={{ form['#obw_destination']['#value'] | render   }}" class="twitter"><i class="fab fa-twitter"></i> {{ 'Sign up with Twitter' | t }}</a>
+                </div>
+                <div class="divine-line mt-25 mb-25">
+                    <p>or</p>
+                </div>
+                {% else %}
+                <div>
+                    <p>{{ 'To unlink this only social account and continue using OBW:'|t }}</p>
+                    <p>{{ 'Please fill up info below and setup new password for your account'|t }}</p>
+                </div>
+                {% endif %}
+
+            <div class="form-wrapper pb-30">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="js-form-type-textfield form-item obw-custom-form">
+                            {{ form.field_account_first_name }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="js-form-type-textfield form-item obw-custom-form">
+                            {{ form.field_account_last_name }}
+                        </div>
+                    </div>
+                </div>
+                <div class="js-form-type-textfield form-item form-item-mail obw-custom-form">
+                    {{ form.account.mail }}
+                    <div style="display: none">{{ form.account.name }}</div>
+                </div>
+                <div class="js-form-type-textfield form-item">
+                    {{ form.account.pass }}
+                </div>
+                {{ form.account | without('mail','name', 'pass') }}
+                {{ form.field_account_news_subscribed }}
+                {{ form.field_account_accept_tnc }}
+                <div class="form-actions form-group text-center">
+                    {{ form.captcha }}
+                    {{ form.actions }}
+                </div>
+            </div>
+
+            {% if form['#obw_social_register'] is not defined %}
+                {#<p>{{ 'Already have an account?' |t }} <a id="open-signup" href="#" onclick ="jQuery('button.ui-dialog-titlebar-close').click();jQuery('li.login a').click();return false;">{{ 'Login in here' | t  }}</a></p>#}
+                {% if form['#register_to_vr_series'] is defined or form['#register_to_campaign'] is defined %}
+                    <div class="back-btn back-to-login mt-0 pb-15">
+                        <input class="dismiss-register" id="open-signup" type="button" onclick ="FormLoginCampaignRedirectLink('login', '?destination={{ form['#obw_destination']['#value'] | render   }}', '{{ form['#register_to_vr_series'] is defined ? 'vr_series' : 'campaign'}}' )" value="{{ 'Back to Login' | t  }}"/>
+                    </div>
+                {% else %}
+                    <div class="register-block">
+                      {% if form['#src'] is defined %}
+                         <p>{{ 'Already have an account?' |t }} <a id="open-signup" href="/user/login?destination={{ form['#obw_destination']['#value'] | render }}">{{ 'Log in here' | t  }}</a></p>
+                      {% else %}
+                         <p>{{ 'Already have an account?' |t }} <a id="open-signup" href="javascript:void(0);" onclick ="FormLoginRedirectLink('login', '?destination={{- form['#obw_destination']['#value'] | render -}}' )">{{ 'Log in here' | t  }}</a></p>
+                      {% endif %}
+                    </div>
+                {% endif %}
+            {% endif %}
+            </div>
+            <div class="col-md-6 desktop">
+              {% if form['#src'] is defined %}
+                <div class="join-our-company">
+                  <h3>Join our community!</h3>
+                  <div class="img">
+                    <img width="180" src="/{{ base_path ~ directory }}/images/obw-sign-up.jpg" alt="OBW Signup Image">
+                  </div>
+                  <div class="community-member">
+                    <p>As a community member, you can: </p>
+                    <ul>
+                      <li>
+                        <div class="icon"><i class="fas fa-book-heart"></i></div>Be a Better Traveller: Create lists of your travel for good favourites, and swap tips in our Community Forum
+                      </li>
+                      <li>
+                        <div class="icon"><i class="fas fa-comments-alt"></i></div>Follow Our Better World's stories: get updates and be informed of their impact
+                      </li>
+                      <li>
+                        <div class="icon"><i class="fas fa-hand-heart"></i></div>Take action more easily and eventually track your personal impact
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              {% else %}
+                {% if form['#override_right_column_signup'] is defined %}
+                  {{ form['#override_right_column_signup'] | raw }}
+                {% else %}
+                  <div class="join-our-company">
+                    <h3>Join our community!</h3>
+                    <div class="img">
+                      <img width="180" src="/{{ base_path ~ directory }}/images/obw-sign-up.jpg" alt="OBW Signup Image">
+                    </div>
+                    <div class="community-member">
+                      <p>As a community member, you can: </p>
+                      <ul>
+                        <li>
+                          <div class="icon"><i class="fas fa-book-heart"></i></div>Follow stories: get updates and be informed of their impact
+                        </li>
+                        <li>
+                          <div class="icon"><i class="fas fa-comments-alt"></i></div>Join the conversation: <i class="fas fa-heart"></i> a story, comment and share ideas
+                        </li>
+                        <li>
+                          <div class="icon"><i class="fas fa-hand-heart"></i></div>Take action more easily and eventually track your personal impact
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                {% endif %}
+              {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {{ form | without('account', 'user_picture', 'message', 'actions', 'captcha', 'contact',
+    'language', 'timezone', 'path', 'field_account_first_name', 'field_account_last_name',
+        'field_account_nationality', 'field_account_city_of_residence',
+        'field_account_news_subscribed', 'field_account_accept_tnc','field_account_signup_url','field_account_signup_source', 'field_gsoty_story_id'
+    ) }}
+</div>
+{% endif %}

@@ -1,0 +1,17 @@
+
+obw_zoom_webinar.webinar_controller_webinar:
+  path: '/obw_zoom_webinar/webinar'
+  defaults:
+    _controller: '\Drupal\obw_zoom_webinar\Controller\WebinarController::webinar'
+    _title: 'Zoom webinar'
+  requirements:
+    _permission: 'access content'
+
+
+obw_zoom_webinar.webinar_controller_join:
+  path: '/obw_zoom_webinar/join'
+  defaults:
+    _controller: '\Drupal\obw_zoom_webinar\Controller\WebinarController::join'
+    _title: 'Zoom webinar'
+  requirements:
+    _permission: 'access content'

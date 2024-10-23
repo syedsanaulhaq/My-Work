@@ -1,0 +1,141 @@
+services:
+  obw_utilities.account_mgmt:
+    class: Drupal\obw_utilities\AccountMgmt
+    arguments: [ '@messenger' ]
+
+  obw_utilities.responsive_image:
+    class: Drupal\obw_utilities\ResponsiveImage
+    arguments: [ '@current_user' ]
+
+  obw_utilities.responsive_background_image:
+    class: Drupal\obw_utilities\ResponsiveBackgroundImage
+
+  obw_utilities.twig_extension.function:
+    class: Drupal\obw_utilities\TwigFunctionExtension
+    tags:
+      - { name: twig.extension }
+
+  obw_utilities.route_subscriber:
+    class: Drupal\obw_utilities\EventSubscriber\RouteSubscriber
+    tags:
+      - { name: event_subscriber }
+
+  form_alter.entity_browser_user_browser:
+    class: Drupal\obw_utilities\Form\EntityBrowserFormManager
+    arguments:
+      # Base form ID. An exact form ID could be used as well. To compute availability in runtime use "match" special keyword.
+      - 'entity_browser_user_browser_form'
+    tags:
+      - name: form_alter
+
+  form_alter.entity_browser_story_media_browser_form:
+    class: Drupal\obw_utilities\Form\EntityBrowserFormManager
+    arguments:
+      # Base form ID. An exact form ID could be used as well. To compute availability in runtime use "match" special keyword.
+      - 'entity_browser_story_media_browser_form'
+    tags:
+      - name: form_alter
+
+  form_alter.user_pass:
+    class: Drupal\obw_utilities\Form\UserPasswordForm
+    arguments:
+      - 'user_pass'
+    tags:
+      - name: form_alter
+
+  form_alter.user_login_form:
+    class: Drupal\obw_utilities\Form\UserLoginForm
+    arguments:
+      - 'user_login_form'
+    tags:
+      - name: form_alter
+
+  form_alter.user_register_form:
+    class: Drupal\obw_utilities\Form\UserRegisterForm
+    arguments:
+      - 'user_register_form'
+    tags:
+      - name: form_alter
+
+  form_alter.node_story_edit_form:
+    class: Drupal\obw_utilities\Form\NodeStoryForm
+    arguments:
+      - 'node_story_edit_form'
+    tags:
+      - name: form_alter
+
+  form_alter.node_story_form:
+    class: Drupal\obw_utilities\Form\NodeStoryForm
+    arguments:
+      - 'node_story_form'
+    tags:
+      - name: form_alter
+
+  form_alter.node_community_blog_form:
+    class: Drupal\obw_utilities\Form\CommunityBlogForm
+    arguments:
+      - 'node_story_story_new_blog_post_form'
+    tags:
+      - name: form_alter
+
+  #alter serries form to add validate
+  form_alter.node_collection_edit_form:
+    class: Drupal\obw_utilities\Form\NodeCollectionForm
+    arguments:
+      - 'node_collection_edit_form'
+    tags:
+      - name: form_alter
+
+  form_alter.node_collection_form:
+    class: Drupal\obw_utilities\Form\NodeCollectionForm
+    arguments:
+      - 'node_collection_form'
+    tags:
+      - name: form_alter
+
+  form_alter.views_exposed_form:
+    class: Drupal\obw_utilities\Form\ViewsExposedForm
+    arguments:
+      - 'views_exposed_form'
+    tags:
+      - name: form_alter
+  obw_utilities.entity_query:
+    class: Drupal\obw_utilities\EntityQuery
+    arguments: [ '@database' ]
+
+  #  Alter spotlight form
+  form_alter.node_spotlight_edit_form:
+    class: Drupal\obw_utilities\Form\NodeSpotlightForm
+    arguments:
+      - 'node_spotlight_edit_form'
+    tags:
+      - name: form_alter
+
+  form_alter.node_spotlight_form:
+    class: Drupal\obw_utilities\Form\NodeSpotlightForm
+    arguments:
+      - 'node_spotlight_form'
+    tags:
+      - name: form_alter
+
+  #  Alter landing page form
+  form_alter.node_landing_page_edit_form:
+    class: Drupal\obw_utilities\Form\NodeLandingForm
+    arguments:
+      - 'node_landing_page_edit_form'
+    tags:
+      - name: form_alter
+
+  form_alter.node_landing_page_form:
+    class: Drupal\obw_utilities\Form\NodeLandingForm
+    arguments:
+      - 'node_landing_page_form'
+    tags:
+      - name: form_alter
+  obw_utilities.service:
+    class: Drupal\obw_utilities\ObwUtilitiesService
+    arguments:
+
+  obw_utilities.missing_story_export:
+    class: Drupal\obw_utilities\StoryMissingContributors
+

@@ -1,0 +1,5 @@
+name: 'Obw Zoom'
+type: module
+description: 'Provide service to implement zoom into website'
+core_version_requirement: ^8 || ^9
+package: 'OBW'

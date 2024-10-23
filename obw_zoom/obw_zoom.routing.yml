@@ -1,0 +1,17 @@
+obw_zoom.fe:
+  path: '/events/zoom'
+  defaults:
+    _controller: '\Drupal\obw_zoom\Controller\ObwZoom::init'
+    _title: 'OBW Zoom'
+  requirements:
+    _permission: 'access content'
+obw.talk_integration.config:
+  path: 'admin/config/obw/zoom'
+  defaults:
+    _form: '\Drupal\obw_zoom\Form\ZoomConfig'
+    _title: 'OBW Zoom configuration'
+  requirements:
+    _permission: 'administer site configuration'
+  options:
+    _admin_route: TRUE
+    no_cache: TRUE

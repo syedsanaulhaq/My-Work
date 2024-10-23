@@ -1,0 +1,245 @@
+{#
+/**
+ * @file
+ * Theme override for a 'form' element.
+ *
+ * Available variables
+ * - attributes: A list of HTML attributes for the wrapper element.
+ * - children: The child elements of the form.
+ *
+ * @see template_preprocess_form()
+ */
+#}
+{% if form['#split_login_2_col'] is defined %}
+    <div id="user-action-login" class="user-action pt-25">
+        <div class="container">
+            <div class="title pt-10 pb-15">
+                {% if form['#obw_title_login'] is defined %}
+                    {% if form['#obw_title_login_waitlist'] is defined %}
+                        <p>{{ form['#obw_title_login_waitlist'] | raw }}</p>
+                    {% else %}
+                        <p>{{ form['#obw_title_login'] | raw }}</p>
+                    {% endif %}
+                {% else %}
+                    {% if form['#obw_header_login'] is defined %}
+                        <h3>{{ form['#obw_header_login'] }}</h3>
+                    {% else %}
+                        <h3>{{ 'Login' | t }}</h3>
+                    {% endif %}
+                    <p>{{ 'Welcome back! Please log in to continue.' | t }}</p>
+                {% endif %}
+                {{ form.message }}
+            </div>
+
+            {% if form.social_register_error is defined %}
+                <div class="message-error text-center pb-15"><span>{{ form.social_register_error }}</span></div>
+                <div class="social-login">
+                    <a href="/user/login/facebook?destination={{ form['#obw_destination']['#value'] | render   }}" class="facebook"><i class="fab fa-facebook"></i> {{ 'Login with Facebook' | t }}</a>
+                    <a href="/user/login/google?destination={{ form['#obw_destination']['#value'] | render }}" class="google"><i class="fab fa-google"></i> {{ 'Login with Google' | t }}</a>
+                    <a href="/user/login/twitter?destination={{ form['#obw_destination']['#value'] | render  }}" class="twitter"><i class="fab fa-twitter"></i> {{ 'Login with Twitter' | t }}</a>
+                </div>
+                {#TODO: add link into href #}
+                <div class="link-previous text-center pt-15 pb-15"><a href="{{ form['#obw_destination']['#value'] }}">{{ 'Go back to where I came from'|t }}</a></div>
+
+            {% elseif form.register_error is defined %}
+                <div class="message-error"><span>{{ form.register_error }}</span></div>
+                <div class="form-wrapper pb-30">
+                    {{ form.name }}
+                    {{ form.pass }}
+                    {{ form.link_social_account }}
+                    <div class="form-actions form-group text-center">
+                        {{ form.captcha }}
+                        {{ form.actions }}
+                    </div>
+                </div>
+
+            {% else %}
+
+            <div class="community-event-block">
+                    <div class="divine-line hide-mobile">
+                            {% if form['#obw_or_text'] is defined %}
+                                <p class="no-uppercase">{{ form['#obw_or_text'] }}</p>
+                            {% else %}
+                                <p>{{ 'OR'|t }}</p>
+                            {% endif %}
+                        </div>
+                    <div class="row">
+
+                            <div class="col-sm-6">
+                                <div class="social-login">
+                                        <a href="/user/login/facebook?destination={{ form['#obw_destination']['#value'] | render   }}" class="facebook"><i class="fab fa-facebook"></i> {{ 'Login with Facebook' | t }}</a>
+                                        <a href="/user/login/google?destination={{ form['#obw_destination']['#value'] | render }}" class="google"><i class="fab fa-google"></i> {{ 'Login with Google' | t }}</a>
+                                        <a href="/user/login/twitter?destination={{ form['#obw_destination']['#value'] | render  }}" class="twitter"><i class="fab fa-twitter"></i> {{ 'Login with Twitter' | t }}</a>
+                                </div>
+                                {% if form['#campaign_social_error'] is defined %}
+                                    <div class="campaign-social-error">{{ form['#campaign_social_error'] | raw }}</div>
+                                {% endif %}
+                                {% if not form['#hide_register_block'] %}
+                                    <div class="register-block hide-mobile">
+                                        {% if form['#register_to_vr_series'] is defined or form['#register_to_campaign'] is defined %}
+                                            <p>{{ 'Don’t have an account?' | t }}  <a href="javascript:void(0);" onclick ="FormLoginCampaignRedirectLink('register', '?destination={{ form['#obw_destination']['#value'] | render  }}', '{{ form['#register_to_vr_series'] is defined ? 'vr_series' : 'campaign'}}' )">{{ 'Create one here.' | t }}</a></p>
+                                        {% else %}
+                                            <p>{{ 'Don’t have an account?' | t }}  <a href="javascript:void(0);" onclick ="FormLoginRedirectLink('register', '?destination={{- form['#obw_destination']['#value'] | render  -}} {{- form['#come_back_param'] ? form['#come_back_param'] : '' -}}' )">{{ 'Create one here.' | t }}</a></p>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-sm-6">
+                                    <div class="divine-line mt-25 mb-25 hide-desktop">
+                                            {% if form['#obw_or_text'] is defined %}
+                                                <p class="no-uppercase">{{ form['#obw_or_text'] }}</p>
+                                            {% else %}
+                                                <p>{{ 'OR'|t }}</p>
+                                            {% endif %}
+                                        </div>
+                                <div class="form-wrapper pb-30">
+                                        {{ form.name }}
+                                        {{ form.pass }}
+                                        <div class="form-actions form-group text-center">
+                                            {{ form.captcha }}
+                                            {{ form.actions }}
+                                        </div>
+                                        <div class="forgot-password text-center pb-25 pt-5">
+                                            {% if form['#come_back_forgot_pw'] is defined %}
+                                                <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password?come_back={{ form['#come_back_forgot_pw'] }}">{{ 'Forgot your password?' | t }}</a>
+                                            {% else %}
+                                                {% if form['#reset_to_vr_series'] is defined %}
+                                                    <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password?vr_series={{ form['#reset_to_vr_series'] }}">{{ 'Forgot your password?' | t }}</a>
+                                                {% else %}
+                                                    {% if form['#follow-normal-url']['#value'] %}
+                                                        <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password?follow-normal-url=true">{{ 'Forgot your password?' | t }}</a>
+                                                    {% else %}
+                                                        <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password{{ form['#action_campaign']['#value'] ? '?action_campaign=true' : '' }}">{{ 'Forgot your password?' | t }}</a>
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if not form['#hide_register_block'] %}
+                                        <div class="register-block hide-desktop">
+                                            {% if form['#register_to_vr_series'] is defined or form['#register_to_campaign'] is defined %}
+                                                <p>{{ 'Don’t have an account?' | t }}  <a href="javascript:void(0);" onclick ="FormLoginCampaignRedirectLink('register', '?destination={{ form['#obw_destination']['#value'] | render  }}', '{{ form['#register_to_vr_series'] is defined ? 'vr_series' : 'campaign'}}' )">{{ 'Create one here.' | t }}</a></p>
+                                            {% else %}
+                                                <p>{{ 'Don’t have an account?' | t }}  <a href="javascript:void(0);" onclick ="FormLoginRedirectLink('register', '?destination={{- form['#obw_destination']['#value'] | render  -}} {{- form['#come_back_param'] ? form['#come_back_param'] : '' -}}' )">{{ 'Create one here.' | t }}</a></p>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                            </div>
+                        </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        {{ form|without('name', 'pass', 'link_social_account', 'subject', 'message', 'actions', 'captcha', 'register_error', 'social_register_error') }}
+    </div>
+{% else %}
+    <div id="user-action-login" class="user-action pt-25">
+        <div class="container">
+            <div class="title pt-10 pb-15">
+                {% if form['#obw_title_login'] is defined %}
+                    {% if form['#obw_title_login_waitlist'] is defined %}
+                        <p>{{ form['#obw_title_login_waitlist'] | raw }}</p>
+                    {% else %}
+                        {% if form['#obw_header_login'] is defined %}
+                          <h3>{{ form['#obw_header_login'] }}</h3>
+                        {% endif %}
+                        <p>{{ form['#obw_title_login'] | raw }}</p>
+                    {% endif %}
+                {% else %}
+                    {% if form['#obw_header_login'] is defined %}
+                        <h3>{{ form['#obw_header_login'] }}</h3>
+                    {% else %}
+                        <h3>{{ 'Login' | t }}</h3>
+                    {% endif %}
+                        <p>{{ 'Welcome back! Please log in to continue.' | t }}</p>
+                {% endif %}
+                {{ form.message }}
+            </div>
+
+            {% if form.social_register_error is defined %}
+                <div class="message-error text-center pb-15"><span>{{ form.social_register_error }}</span></div>
+                <div class="social-login">
+                    <a href="/user/login/facebook?destination={{ form['#obw_destination']['#value'] | render   }}" class="facebook"><i class="fab fa-facebook"></i> {{ 'Login with Facebook' | t }}</a>
+                    <a href="/user/login/google?destination={{ form['#obw_destination']['#value'] | render }}" class="google"><i class="fab fa-google"></i> {{ 'Login with Google' | t }}</a>
+                    <a href="/user/login/twitter?destination={{ form['#obw_destination']['#value'] | render  }}" class="twitter"><i class="fab fa-twitter"></i> {{ 'Login with Twitter' | t }}</a>
+                </div>
+{#                TODO: add link into href#}
+                <div class="link-previous text-center pt-15 pb-15"><a href="{{ form['#obw_destination']['#value'] }}">{{ 'Go back to where I came from'|t }}</a></div>
+
+            {% elseif form.register_error is defined %}
+                <div class="message-error"><span>{{ form.register_error }}</span></div>
+                <div class="form-wrapper pb-30">
+                    {{ form.name }}
+                    {{ form.pass }}
+                    {{ form.link_social_account }}
+                    <div class="form-actions form-group text-center">
+                        {{ form.captcha }}
+                        {{ form.actions }}
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="social-login">
+                    <a href="/user/login/facebook?destination={{ form['#obw_destination']['#value'] | render   }}" class="facebook"><i class="fab fa-facebook"></i> {{ 'Login with Facebook' | t }}</a>
+                    <a href="/user/login/google?destination={{ form['#obw_destination']['#value'] | render }}" class="google"><i class="fab fa-google"></i> {{ 'Login with Google' | t }}</a>
+                    <a href="/user/login/twitter?destination={{ form['#obw_destination']['#value'] | render  }}" class="twitter"><i class="fab fa-twitter"></i> {{ 'Login with Twitter' | t }}</a>
+                </div>
+                {% if form['#campaign_social_error'] is defined %}
+                    <div class="campaign-social-error">{{ form['#campaign_social_error'] | raw }}</div>
+                {% endif %}
+                <div class="divine-line mt-25 mb-25">
+                    {% if form['#obw_or_text'] is defined %}
+                        <p class="no-uppercase">{{ form['#obw_or_text'] }}</p>
+                    {% else %}
+                        <p>{{ 'OR'|t }}</p>
+                    {% endif %}
+                </div>
+                <div class="form-wrapper pb-30">
+                    {{ form.name }}
+                    {{ form.pass }}
+                    <div class="form-actions form-group text-center">
+                        {{ form.captcha }}
+                        {{ form.actions }}
+                    </div>
+                    <div class="forgot-password text-center pb-25 pt-5">
+                        {% if form['#come_back_forgot_pw'] is defined %}
+                      {% if form['#src'] is defined %}
+                        <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password?fe_url={{ form['#come_back_forgot_pw'] }}">{{ 'Forgot your password?' | t }}</a>
+                      {% else %}
+                        <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password?come_back={{ form['#come_back_forgot_pw'] }}">{{ 'Forgot your password?' | t }}</a>
+                      {% endif %}
+                        {% else %}
+                            {% if form['#reset_to_vr_series'] is defined %}
+                                <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password?vr_series={{ form['#reset_to_vr_series'] }}">{{ 'Forgot your password?' | t }}</a>
+                            {% else %}
+                                {% if form['#follow-normal-url']['#value'] %}
+                                    <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password?follow-normal-url=true">{{ 'Forgot your password?' | t }}</a>
+                                {% else %}
+                                    <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password{{ form['#action_campaign']['#value'] ? '?action_campaign=true' : '' }}">{{ 'Forgot your password?' | t }}</a>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% if not form['#hide_register_block'] %}
+                    <div class="register-block">
+                        {% if form['#register_to_vr_series'] is defined or form['#register_to_campaign'] is defined %}
+                            <p>{{ 'Don’t have an account?' | t }}  <a href="javascript:void(0);" onclick ="FormLoginCampaignRedirectLink('register', '?destination={{ form['#obw_destination']['#value'] | render  }}', '{{ form['#register_to_vr_series'] is defined ? 'vr_series' : 'campaign'}}' )">{{ 'Create one here.' | t }}</a></p>
+                        {% else %}
+                          {% if form['#src'] is defined %}
+                            <p>{{ 'Don’t have an account?' | t }}  <a href="/user/register?{{ form['#fe_register_url'] | render  }}">{{ 'Create one here.' | t }}</a></p>
+                          {% else %}
+                            <p>{{ 'Don’t have an account?' | t }}  <a href="javascript:void(0);" onclick ="FormLoginRedirectLink('register', '?destination={{- form['#obw_destination']['#value'] | render  -}} {{- form['#come_back_param'] ? form['#come_back_param'] : '' -}}' )">{{ 'Create one here.' | t }}</a></p>
+                          {% endif%}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endif %}
+
+        </div>
+
+        {{ form|without('name', 'pass', 'link_social_account', 'subject', 'message', 'actions', 'captcha', 'register_error', 'social_register_error') }}
+    </div>
+{% endif %}

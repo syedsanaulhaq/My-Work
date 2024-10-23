@@ -1,0 +1,5 @@
+services:
+  add_header_subscriber:
+    class: Drupal\obw_zoom\EventSubscriber\AddHeaderSubscriber
+    tags:
+      - { name: event_subscriber }

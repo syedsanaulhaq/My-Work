@@ -1,0 +1,50 @@
+{#
+/**
+ * @file
+ * Theme override for a 'form' element.
+ *
+ * Available variables
+ * - attributes: A list of HTML attributes for the wrapper element.
+ * - children: The child elements of the form.
+ *
+ * @see template_preprocess_form()
+ */
+#}
+<div id="content">
+    <div id="user-action" class="pt-30 pb-15">
+    <div class="container">
+        <div class="title pb-15">
+            <h3>{{ 'Password Reset' |t }}</h3>
+            <p>
+                {{ 'We will send instructions to your email address below.' | t }}
+            </p>
+        </div>
+
+        {% if form.error %}
+            <div class="message"><p class="messages--error" style="background: none;">{{ form.error|render }}</p></div>
+        {% endif %}
+
+        <div class="form-wrapper">
+            <div class="js-form-type-email form-item">
+                {{ form.name }}
+            </div>
+            <div class="form-actions form-group text-center pt-20">
+                {{ form.actions }}
+            </div>
+            <div class="back-btn back-to-login">
+                {% if form['#is_campaign'] is defined or form['#vr_series_page'] is defined %}
+                    <a href="#" onclick ="jQuery('button.ui-dialog-titlebar-close').click();return false;"><i class="ion ion-ios7-arrow-left"></i>
+                        {{ 'Back to Login' |t }}</a>
+                {% else %}
+                    <a href="#" onclick ="closeForgotForm()"><i class="ion ion-ios7-arrow-left"></i>
+                        {{ 'Back to Login' |t }}</a>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+
+{{ form.form_build_id }}
+{{ form.form_id}}

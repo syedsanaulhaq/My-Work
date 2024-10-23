@@ -1,0 +1,56 @@
+{% if not dont_show_forum %}
+  <div class="obw-forum">
+    <div class="container">
+      <div class="block-title">
+        {{ forum_desc_html | raw }}
+      </div>
+      {% if list_topics %}
+        <div class="topic-desktop hide-mb">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <th width="80%">
+                Topic
+              </th>
+              <th class="text-center hide-mb">
+                Replies
+              </th>
+              <th class="text-center hide-mb  ">
+                Votes
+              </th>
+            </tr>
+            {% for topic in list_topics %}
+              <tr>
+                <td>
+                  <div class="topic-item-desc">
+                    <p>
+                      <a href="{{ topic['url'] }}" target="_blank">{{ topic['title'] | raw }}</a>
+                    </p>
+                  </div>
+                </td>
+                <td class="text-center replies">
+                  <div class="topic-action">
+                    <p>
+                      <i class="fal fa-comment"></i>
+                      {{ topic['replies'] }}</p>
+                  </div>
+                </td>
+                <td class="text-center vote">
+                  <div class="topic-action">
+                    <p>
+                      <i class="fal fa-thumbs-up"></i>
+                      {{ topic['votes'] }}</p>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
+      {% else %}
+        {% if msg_no_topic %}
+          {{ msg_no_topic | raw }}
+        {% endif %}
+      {% endif %}
+      {{ create_topic_html | raw }}
+    </div>
+  </div>
+{% endif %}

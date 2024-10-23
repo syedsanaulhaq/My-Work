@@ -1,0 +1,454 @@
+<?php /** @noinspection PhpComposerExtensionStubsInspection */
+
+/**
+ * @file
+ * Contains obw_tracking.module.
+ */
+
+use Drupal\Component\Serialization\Json;
+use Drupal\node\Entity\Node;
+
+
+/**
+ * Implements hook_page_attachments().
+ *
+ * @param array $attachments
+ */
+function obw_tracking_page_attachments(array &$attachments) {
+  $admin_panel_url_pattern = '/^\/admin\/(\S+)$/';
+  $series_gsoty_pattern = '/(gsoty|series)\/[a-zA-Z0-9]+/';
+  $current_url = \Drupal::request()->getRequestUri();
+
+  if (!preg_match($admin_panel_url_pattern, $current_url, $output_array)) {
+    $attachments['#attached']['library'][] = 'obw_tracking/global-tracking';
+  }
+
+  if (preg_match($series_gsoty_pattern, $current_url)) {
+    $attachments['#attached']['library'][] = 'obw_tracking/series-gsoty';
+  }
+}
+
+
+function obw_tracking_preprocess_html(&$variables) {
+  $admin_panel_url_pattern = '/^\/admin\/(\S+)$/';
+  $current_url = \Drupal::request()->getRequestUri();
+
+  if (!preg_match($admin_panel_url_pattern, $current_url, $output_array)) {
+    $node = \Drupal::routeMatch()->getParameter('node');
+    $page_config = [
+      'search_result' => [
+        'event' => 'generic',
+        'eventCategory' => 'Internal Search',
+        'eventAction' => 'Search Result',
+      ],
+      'series' => [
+        'event' => 'content_view',
+        'eventCategory' => 'Stories',
+        'eventAction' => 'Series Views',
+        'contentType' => 'series',
+      ],
+      'story' => [
+        'event' => 'content_view',
+        'eventCategory' => 'Stories',
+        'eventAction' => 'Story Views',
+        'contentType' => 'story',
+        'contentViews' => 1,
+      ],
+      'contributor' => [
+        'event' => 'generic',
+        'eventCategory' => 'Stories',
+        'eventAction' => 'Profile Views',
+      ],
+      'support' => [
+        'event' => 'form_start',
+        'eventCategory' => 'Stories',
+        'eventAction' => 'Support Form Start',
+        'contentType' => 'form',
+        'contentName' => 'story support form',
+        'formStarts' => 1,
+      ],
+      'contact_form' => [
+        'event' => 'form_start',
+        'eventCategory' => 'Enquiry',
+        'eventAction' => 'Form Start',
+        'contentType' => 'form',
+        'formStarts' => 1,
+      ],
+      'donate' => [
+        'event' => 'generic',
+        'eventCategory' => 'Support OBW',
+        'eventAction' => 'Donate Start',
+        'eventLabel' => '',
+      ],
+      'register_succeed' => [
+        'event' => 'signup',
+        'eventCategory' => 'Account Signup',
+        'eventAction' => 'Submit',
+        'userSignup' => 1,
+      ],
+      'login_succeed' => [
+        'event' => 'signin',
+        'eventCategory' => 'Account Signin',
+        'eventAction' => 'Submit',
+        'userSignin' => 1,
+      ],
+    ];
+
+    // partern url
+    $story_support_url_parttern = '/^\/story\/(\S+)\/support\/(\S+)/';
+    $search_result_url_pattern = '/^\/search\?keyword=(\S*)/';
+    $story_contact_us_url_pattern = '/^\/contact-us\?story_id=(\S+)/';
+    $contact_us_form_url_pattern = '/^\/contact-us(\S*)/';
+    $series_url_pattern = '/^\/series\/(\S+)/';
+    $contributor_profile_url_pattern = '/^\/profile\/(\S+)/';
+    $action_in_profile_url_pattern = '/^\/user\/(\d+)\/actions$/';
+    $profile_view_url_pattern = '/^\/about-us\/our-team/';
+    $event_url_pattern = '/^\/events\/([a-zA-Z0-9\-]+)/';
+
+    // config form name for contact us
+    $contact_us_form_name_general = 'General Feedback';
+    $contact_us_form_name_partnership = 'Partnership';
+    $contact_us_form_name_create_story = 'Create stories with us';
+    $contact_us_form_name_pitch_story = 'Pitch us a story';
+    $contact_us_form_name_story = 'Story feedback';
+
+    // get user id
+    $account = \Drupal::currentUser();
+    $user = \Drupal\user\Entity\User::load($account->id());
+    $user_id = $account->isAnonymous() ? 'Not Login' : $user->id();
+    $user_cookie = isset($_COOKIE['session_store_id']) ? $_COOKIE['session_store_id'] : "";
+
+    // init config
+    $previous_url = \Drupal::request()->headers->get('referer');
+    $previous_page_path = parse_url($previous_url, PHP_URL_PATH);
+    $previous_page_path = $previous_page_path != '' ? $previous_page_path : 'entries';
+
+    $theme_settings = NULL;
+    if (isset($variables["page"]["#attached"]["drupalSettings"]["obw_theme"])) {
+      $theme_settings = $variables["page"]["#attached"]["drupalSettings"]["obw_theme"];
+    }
+    $story_perference_actions = isset($theme_settings["actions"]) ? $theme_settings["actions"] : "";
+    $story_perference_causes = isset($theme_settings["causes"]) ? $theme_settings["causes"] : "";
+    $story_perference_countries = isset($theme_settings["countries"]) ? $theme_settings["countries"] : "";
+    $story_perference_tags = isset($theme_settings["tags"]) ? $theme_settings["tags"] : "";
+
+    $array_story_perferences = [
+      "actions" => $story_perference_actions,
+      "causes" => $story_perference_causes,
+      "countries" => $story_perference_countries,
+      "tags" => $story_perference_tags,
+    ];
+
+    $array_story_for_query = [
+      "actions" => [],
+      "causes" => [],
+      "countries" => [],
+      "tags" => [],
+    ];
+
+    // hanlde get only number of perference
+    foreach ($array_story_perferences as $key => &$array_specific_perference) {
+      if ($array_specific_perference != "") {
+        // convert string to array
+        $array_specific_perference = json_decode($array_specific_perference, TRUE);
+
+        $item_format = [];
+        foreach ($array_specific_perference as $item_key => $item_value) {
+          $item_format[$item_value["label"]] = $item_value["value"];
+        }
+
+        $array_specific_perference = $item_format;
+      }
+      else {
+        // type is array because after this will convert to string
+        $array_specific_perference = [];
+      }
+    }
+
+    if ($account->isAnonymous()) {
+      $story_perference = 'actions=;causes=;countries=;tags=';
+    }
+    else {
+      $story_perference =
+        'actions=' . join(",", array_values($array_story_perferences["actions"])) .
+        ';causes=' . join(",", array_values($array_story_perferences["causes"])) .
+        ';countries=' . join(",", array_values($array_story_perferences["countries"])) .
+        ';tags=' . join(",", array_values($array_story_perferences["tags"]));
+    }
+
+    $event_item = [
+      "pagename" => $current_url,
+      "previousPage" => $previous_page_path,
+      "timestamp" => \Drupal::time()->getCurrentTime(),
+      "userID" => $user_id,
+      "userCookieID" => $user_cookie,
+      "storyPerference" => $story_perference,
+    ];
+
+    // search result loads
+    if ((preg_match($search_result_url_pattern, $current_url, $output_array))) {
+      $key_word = $output_array[1];
+      $event_item = array_merge($event_item, $page_config['search_result']);
+      $event_item['eventLabel'] = $key_word . ' | ' . 'null';
+    }
+
+    // country, cause, tags page loads
+    if ($current_url == '/stories' || strpos($current_url, '/stories?') !== FALSE) {
+      $event_item['filter'] = 'actions=;causes=;countries=;tags=';
+      $event_item['storyPerference'] = 'actions=;causes=;countries=;tags=';
+
+      $variables['#attached']['library'][] = 'obw_tracking/filter';
+    }
+    if (preg_match('/\/(country|cause|tags)\/(\S+)/', $current_url, $output_array)) {
+      $tag = $output_array[1];
+      $tag_value = $output_array[2];
+
+      $variables['#attached']['library'][] = 'obw_tracking/filter';
+      switch ($tag) {
+        case 'country':
+          $event_item['filter'] = 'actions=;causes=;countries=' . $tag_value . ';tags=';
+          break;
+        case 'cause':
+          $event_item['filter'] = 'actions=;causes=' . $tag_value . ';countries=;tags=';
+          break;
+        case 'tags':
+          $event_item['filter'] = 'actions=;causes=;countries=;tags=' . $tag_value;
+          break;
+      }
+    }
+
+    if (isset($node) && $node instanceof Node) {
+      // Create variable out of the current node type
+      $node_type = $node->getType();
+
+      if (($node_type == 'story')) {
+        $event_item = array_merge($event_item, $page_config['story']);
+        $event_item['eventLabel'] = $node->getTitle();
+        $event_item['contentName'] = $node->getTitle();
+        $event_item['contentID'] = $node->id();
+
+        // attach library
+        $variables['#attached']['library'][] = 'obw_tracking/story';
+        $variables['#attached']['drupalSettings']['tracking_seo']['story_title'] = $node->getTitle();
+      }
+    }
+
+    // series load
+    if ($current_url == '/gsoty/2018') {
+      $series_title = "";
+      $series_id = "";
+
+      if (isset($variables['page']['#attached']['drupalSettings']['obw_theme']['node_user_actions'])) {
+        $node_user_actions = $variables['page']['#attached']['drupalSettings']['obw_theme']['node_user_actions'];
+        $node_user_actions = Json::decode($node_user_actions);
+        $series_title = $node_user_actions["obj_title"];
+        $series_id = $node_user_actions["obj_id"];
+      }
+
+      $event_item = array_merge($event_item, $page_config['series']);
+      $event_item['eventLabel'] = $series_title;
+      $event_item['contentName'] = $series_title;
+      $event_item['contentID'] = $series_id;
+    }
+    // series/refugee-stories
+    if (preg_match($series_url_pattern, $current_url, $output_array)) {
+      $series_title = "";
+      $series_id = "";
+      if (isset($variables['page']['#attached']['drupalSettings']['obw_theme']['node_user_actions'])) {
+        $node_user_actions = $variables['page']['#attached']['drupalSettings']['obw_theme']['node_user_actions'];
+        $node_user_actions = Json::decode($node_user_actions);
+        $series_title = $node_user_actions["obj_title"];
+        $series_id = $node_user_actions["obj_id"];
+      }
+
+      $event_item = array_merge($event_item, $page_config['series']);
+      $series_name = $output_array[1];
+      $event_item['eventLabel'] = $series_title;
+      $event_item['contentName'] = $series_title;
+      $event_item['contentID'] = $series_id;
+    }
+
+    // contributor pages
+    if (preg_match($contributor_profile_url_pattern, $current_url, $output_array)) {
+      $event_item = array_merge($event_item, $page_config['contributor']);
+      $profile_name = $output_array[1];
+      $event_item['eventLabel'] = $profile_name;
+
+      // attach library
+      $variables['#attached']['library'][] = 'obw_tracking/story';
+      $variables['#attached']['drupalSettings']['tracking_seo']['profile_name'] = $profile_name;
+    }
+
+    // story support
+    if (preg_match($story_support_url_parttern, $current_url, $output_array)) {
+      $node_path = \Drupal::service('path_alias.manager')
+        ->getPathByAlias($current_url);
+      if (preg_match('/node\/(\d+)/', $node_path, $matches)) {
+        $cta_node = $matches[1];
+      }
+
+      if (isset($cta_node)) {
+        $etm = \Drupal::entityTypeManager();
+        $array_story_node = $etm->getStorage('node')->loadByProperties(
+          [
+            'type' => 'story',
+            'field_story_call_to_actions' => $cta_node,
+          ]
+        );
+        $array_story_node = array_keys($array_story_node);
+
+        $story_id = (string) $array_story_node[0];
+        $story_title = str_replace('-', ' ', $output_array[1]);
+        $support_title = str_replace('-', ' ', $output_array[2]);
+
+        $event_item = array_merge($event_item, $page_config['support']);
+        $event_item['eventLabel'] = $story_title . ' | ' . $support_title;
+        $event_item['contentID'] = $story_id;
+
+        // attach library
+        $variables['#attached']['library'][] = 'obw_tracking/form';
+        $variables['#attached']['drupalSettings']['tracking_seo']['story_title'] = $story_title;
+        $variables['#attached']['drupalSettings']['tracking_seo']['support_title'] = $support_title;
+        $variables['#attached']['drupalSettings']['tracking_seo']['story_id'] = $story_id;
+      }
+    }
+
+    // contact-us
+    if (in_array($current_url, [
+      '/contact-us',
+      '/contact-us?purpose=general',
+    ])) {
+      $event_item = array_merge($event_item, $page_config['contact_form']);
+      $event_item['eventLabel'] = $contact_us_form_name_general;
+      $event_item['contentName'] = $contact_us_form_name_general;
+
+    }
+    else {
+      if ($current_url == '/contact-us?purpose=partnership') {
+        $event_item = array_merge($event_item, $page_config['contact_form']);
+        $event_item['eventLabel'] = $contact_us_form_name_partnership;
+        $event_item['contentName'] = $contact_us_form_name_partnership;
+
+      }
+      else {
+        if ($current_url == '/contact-us?purpose=create_stories_with_us') {
+          $event_item = array_merge($event_item, $page_config['contact_form']);
+          $event_item['eventLabel'] = $contact_us_form_name_create_story;
+          $event_item['contentName'] = $contact_us_form_name_create_story;
+
+        }
+        else {
+          if ($current_url == '/contact-us?purpose=pitch_us_a_story') {
+            $event_item = array_merge($event_item, $page_config['contact_form']);
+            $event_item['eventLabel'] = $contact_us_form_name_pitch_story;
+            $event_item['contentName'] = $contact_us_form_name_pitch_story;
+
+          }
+          else {
+            if (preg_match($story_contact_us_url_pattern, $current_url, $output_array)) {
+              $story_id = $output_array[1];
+
+              $event_item = array_merge($event_item, $page_config['contact_form']);
+              $event_item['eventLabel'] = $contact_us_form_name_story;
+              $event_item['contentName'] = $contact_us_form_name_story;
+              $event_item['contentID'] = $story_id;
+
+              // attach for only contact us story
+              $variables['#attached']['drupalSettings']['tracking_seo']['story_id'] = $story_id;
+            }
+          }
+        }
+      }
+    }
+
+    if (preg_match($event_url_pattern, $current_url, $output_array)) {
+      $story_id = '';
+      $form_name = $output_array[1];
+
+      // attach library
+      $variables['#attached']['library'][] = 'obw_tracking/form';
+      $variables['#attached']['drupalSettings']['tracking_seo']['story_id'] = $story_id;
+      $variables['#attached']['drupalSettings']['tracking_seo']['form_name'] = $form_name;
+    }
+
+    // attach library in contact us form
+    if (preg_match($contact_us_form_url_pattern, $current_url, $output_array)) {
+      $form_name = $event_item['contentName'] ?? NULL;
+
+      // attach library
+      $variables['#attached']['library'][] = 'obw_tracking/form';
+      $variables['#attached']['drupalSettings']['tracking_seo']['form_name'] = $form_name;
+    }
+
+    if ($current_url === '/choose-your-action') {
+      // attach library
+      $variables['#attached']['library'][] = 'obw_tracking/choose-your-action';
+    }
+
+    if ($current_url === '/about-us/support-us' || $current_url === '/support-us/success') {
+      $event_item = array_merge($event_item, $page_config['donate']);
+
+      // attach library
+      $variables['#attached']['library'][] = 'obw_tracking/donate';
+    }
+
+
+    if (preg_match($action_in_profile_url_pattern, $current_url, $output_array)) {
+      // attach library
+      $variables['#attached']['library'][] = 'obw_tracking/action-in-profile';
+    }
+
+    if (preg_match($profile_view_url_pattern, $current_url, $output_array)) {
+      // attach library
+      $variables['#attached']['library'][] = 'obw_tracking/profile-view';
+      $variables['#attached']['drupalSettings']['tracking_seo']['event_item'] = json_encode($event_item);
+    }
+
+    $session_handler = \Drupal::service('obw_social.session_handler');
+    $tracking_type = $session_handler->get('tracking_type');
+    $user_id = $session_handler->get('user_id_tracking');
+    $is_login = FALSE;
+
+    if (!empty($tracking_type)) {
+      if ($tracking_type == 'social_login') {
+        $is_login = TRUE;
+        $social = $session_handler->get('social');
+      }
+      else {
+        if ($tracking_type == 'social_register') {
+          $is_login = TRUE;
+          $social = $session_handler->get('social');
+        }
+        else {
+          if ($tracking_type == 'email_register') {
+            $social = "not social";
+          }
+        }
+      }
+      $login_signup_content = [
+        'social' => $social,
+        'is_login' => $is_login,
+        'user_id' => $user_id,
+      ];
+      $variables['#attached']['drupalSettings']['tracking_seo']['login_signup_info'] = json_encode($login_signup_content);
+
+      $session_handler->clear("social");
+      $session_handler->clear("tracking_type");
+      $session_handler->clear("user_id_tracking");
+    }
+
+    if (!empty($event_item['eventLabel'])) {
+      $event_item['eventLabel'] = str_replace("'", '"', $event_item['eventLabel']);
+    }
+    if (!empty($event_item['contentName'])) {
+      $event_item['contentName'] = str_replace("'", '"', $event_item['contentName']);
+    }
+
+    $dataLayer = [$event_item];
+    $dataLayer = json_encode($dataLayer);
+    $dataLayer = str_replace('\/', '/', $dataLayer);
+    $dataLayer = str_replace('"', '\'', $dataLayer);
+    $variables['data_layer'] = 'var dataLayer = ' . $dataLayer;
+
+  }
+}

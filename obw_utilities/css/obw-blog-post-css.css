@@ -1,0 +1,13 @@
+.blog_post_header {
+  color: #0074bd;
+  border: solid #bfbfba;
+  border-width: 1px 0;
+  background: #f5f5f2;
+  font-weight: bold;
+  font-size: inherit;
+  padding: 10px 12px;
+}
+
+#edit-field-image-story-blur-value--description {
+  margin-left: 0;
+}

@@ -1,0 +1,29 @@
+views.argument.tax_sep_multi_choice_filter:
+  type: views.argument.many_to_one
+  label: 'Taxonomy term ID'
+
+views.filter.tax_sep_multi_choice_filter:
+  type: views.filter.many_to_one
+  label: 'Taxonomy term ID'
+  mapping:
+    vid:
+      type: string
+      label: 'Vocabulary'
+    type:
+      type: string
+      label: 'Selection type'
+    hierarchy:
+      type: boolean
+      label: 'Show hierarchy in dropdown'
+    limit:
+      type: boolean
+      label: 'Limit to vocabulary'
+    error_message:
+      type: boolean
+      label: 'Display error message'
+    value:
+      type: sequence
+      label: 'Values'
+      sequence:
+        type: integer
+        label: 'Value'

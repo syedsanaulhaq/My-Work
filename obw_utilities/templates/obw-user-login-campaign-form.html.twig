@@ -1,0 +1,90 @@
+{#
+/**
+ * @file
+ * Theme override for a 'form' element.
+ *
+ * Available variables
+ * - attributes: A list of HTML attributes for the wrapper element.
+ * - children: The child elements of the form.
+ *
+ * @see template_preprocess_form()
+ */
+#}
+<div id="user-action-login-campaign" class="user-action pt-25">
+<div class="container">
+    <div class="title pb-15">
+        {% if form['#obw_campaign_title_login'] is defined %}
+            <h3>{{ form['#obw_campaign_title_login'] | render }}</h3>
+        {% else %}
+            <h3>{{ 'Login' | t }}</h3>
+        {% endif %}
+
+        {% if form['#obw_campaign_description_login'] is defined  %}
+            {{ form['#obw_campaign_description_login'] | raw }}
+        {% else %}
+            {% if form['#obw_title_login'] is defined %}
+                <p>{{ form['#obw_title_login'] | render }}</p>
+            {% else %}
+                <p>{{ 'Welcome back! Please log in to continue.' | t }}</p>
+            {% endif %}
+        {% endif %}
+        {{ form.message }}
+    </div>
+
+    {% if form.social_register_error is defined %}
+        <div class="message-error text-center pb-15"><span>{{ form.social_register_error }}</span></div>
+        <div class="social-login">
+            <a href="/user/login/facebook?destination={{ form['#obw_destination']['#value'] | render   }}" class="facebook"><i class="fab fa-facebook"></i> {{ 'Login with Facebook' | t }}</a>
+            <a href="/user/login/google?destination={{ form['#obw_destination']['#value'] | render }}" class="google"><i class="fab fa-google"></i> {{ 'Login with Google' | t }}</a>
+            <a href="/user/login/twitter?destination={{ form['#obw_destination']['#value'] | render  }}" class="twitter"><i class="fab fa-twitter"></i> {{ 'Login with Twitter' | t }}</a>
+        </div>
+        {#TODO: add link into href #}
+        <div class="link-previous text-center pt-15 pb-15"><a href="{{ form['#obw_destination']['#value'] }}">{{ 'Go back to where I came from'|t }}</a></div>
+
+    {% elseif form.register_error is defined %}
+        <div class="message-error"><span>{{ form.register_error }}</span></div>
+        <div class="form-wrapper pb-30">
+            {{ form.name }}
+            {{ form.pass }}
+            {{ form.link_social_account }}
+            <div class="form-actions form-group text-center">
+                {{ form.captcha }}
+                {{ form.actions }}
+            </div>
+        </div>
+
+    {% else %}
+        <div class="social-login">
+            <a href="/user/login/facebook?destination={{ form['#obw_destination']['#value'] | render   }}" class="facebook"><i class="fab fa-facebook"></i> {{ 'Login with Facebook' | t }}</a>
+            <a href="/user/login/google?destination={{ form['#obw_destination']['#value'] | render }}" class="google"><i class="fab fa-google"></i> {{ 'Login with Google' | t }}</a>
+            <a href="/user/login/twitter?destination={{ form['#obw_destination']['#value'] | render  }}" class="twitter"><i class="fab fa-twitter"></i> {{ 'Login with Twitter' | t }}</a>
+        </div>
+        {% if form['#campaign_social_error'] is defined %}
+            <div class="campaign-social-error">{{ form['#campaign_social_error'] | raw }}</div>
+        {% endif %}
+        <div class="divine-line mt-25 mb-25">
+            <p>{{ 'OR'|t }}</p>
+        </div>
+        <div class="form-wrapper pb-30">
+            {{ form.name }}
+            {{ form.pass }}
+            <div class="form-actions form-group text-center">
+                {{ form.captcha }}
+                {{ form.actions }}
+            </div>
+            <div class="forgot-password text-center pb-25 pt-5">
+                    <a class="use-ajax no-title"data-dialog-options="{&quot;width&quot;:370, &quot;show&quot;:&quot;slideDown&quot; , &quot;closeOnEscape&quot;:true}" data-dialog-type="modal" href="/user/password?vr_series={{ form['#current_url'] }}">{{ 'Forgot your password?' | t }}</a>
+            </div>
+        </div>
+        {% if not form['#hide_register_block'] %}
+            <div class="register-block">
+                {#<p>{{ 'Don’t have an account?' | t }}  <a href="#" onclick ="jQuery('button.ui-dialog-titlebar-close').click();jQuery('li.user-button-group a.sign-up-btn').click();return false;">{{ 'Create one here.' | t }}</a></p>#}
+                <p>{{ 'Don’t have an account?' | t }}  <a onclick ="FormLoginCampaignRedirectLink('register', '?destination={{ form['#obw_destination']['#value'] | render  }}' )">{{ 'Create one here.' | t }}</a></p>
+            </div>
+        {% endif %}
+    {% endif %}
+
+</div>
+
+{{ form|without('name', 'pass', 'link_social_account', 'subject', 'message', 'actions', 'captcha', 'register_error', 'social_register_error') }}
+</div>

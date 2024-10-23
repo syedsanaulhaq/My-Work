@@ -1,0 +1,47 @@
+{#
+/**
+ * @file
+ * Theme override for a 'form' element.
+ *
+ * Available variables
+ * - attributes: A list of HTML attributes for the wrapper element.
+ * - children: The child elements of the form.
+ *
+ * @see template_preprocess_form()
+ */
+#}
+<div id="user-action-register" class="user-action pt-25">
+    <div class="container">
+
+        <div class="row align-items-center">
+            <div class="form-wrapper pb-30">
+                <div class="js-form-type-textfield form-item">
+                    {{ form.field_account_first_name }}
+                </div>
+                <div class="js-form-type-textfield form-item">
+                    {{ form.field_account_last_name }}
+                </div>
+                <div class="js-form-type-textfield form-item">
+                    {{ form.account.mail }}
+                    <div style="display: none">{{ form.account.name }}</div>
+                </div>
+                <div class="js-form-type-textfield form-item">
+                    {{ form.account.pass }}
+                </div>
+                {{ form.account | without('mail','name', 'pass') }}
+                {#{{ form.field_account_news_subscribed }}#}
+                {#{{ form.field_account_accept_tnc }}#}
+                <div class="form-actions form-group text-center">
+                    {#{{ form.captcha }}#}
+                    {{ form.actions }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ form | without('account', 'user_picture', 'message', 'actions', 'captcha', 'contact',
+    'language', 'timezone', 'path', 'field_account_first_name', 'field_account_last_name',
+        'field_account_nationality', 'field_account_city_of_residence',
+        'field_account_news_subscribed', 'field_account_accept_tnc'
+    ) }}
+</div>

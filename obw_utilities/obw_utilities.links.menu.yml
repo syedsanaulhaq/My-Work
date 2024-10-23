@@ -1,0 +1,203 @@
+#home
+homeblockcfg:
+  title: Block Config
+  description: 'Homepage Block Content Configuration'
+  url: internal:/admin/structure/block/block-content?info=&type=All&order=info&sort=asc
+  menu_name: obw_home
+  weight: -99
+home1ststorycfg:
+  title: Spotlight Config
+  description: 'Homepage 1st Story Configuration'
+  url: internal:/admin/structure/entityqueue/home_1st_story/home_1st_story?destination=node
+  menu_name: obw_home
+  weight: -98
+homeblockseries:
+  title: Series Config
+  description: 'Homepage Series Configuration'
+  url: internal:/admin/structure/entityqueue/home_series/home_series?destination=node
+  menu_name: obw_home
+  weight: -74
+#writer
+writerhome:
+  title: Home
+  description: 'Homepage '
+  url: internal:/
+  menu_name: obw_writer
+  weight: -100
+writerdraft:
+  title: Stories
+  description: 'View Own Stories'
+  url: internal:/admin/writer
+  menu_name: obw_writer
+  weight: -91
+writerblog:
+  title: Blogs
+  description: 'Blogs'
+  url: internal:/admin/list-page-blog-for-writer
+  menu_name: obw_writer
+  weight: -91   
+writeraddnew:
+  title: Add Story
+  description: 'Add Draft Story'
+  url: internal:/node/add/story
+  menu_name: obw_writer
+  weight: -89  
+#content-admin
+contentadminhome:
+  title: Home
+  description: 'Homepage '
+  url: internal:/
+  menu_name: obw_content_admin
+  weight: -100
+contentadminstories:
+  title: Stories
+  description: 'View All Stories'
+  url: internal:/admin/content-admin
+  menu_name: obw_content_admin
+  weight: -90
+contentadminseries:
+  title: Series
+  description: 'View All Series'
+  url: internal:/admin/content-admin/series
+  menu_name: obw_content_admin
+  weight: -80
+contentadminblog:
+  title: Blogs
+  description: 'Blogs'
+  url: internal:/admin/list-page-blog
+  menu_name: obw_content_admin
+  weight: -80   
+contentadminaddnewstory:
+  title: Add Story
+  description: 'Add Draft Story'
+  url: internal:/node/add/story
+  menu_name: obw_content_admin
+  weight: -79   
+contentadminaddnewseries:
+  title: Add Series
+  description: 'Add Series'
+  url: internal:/node/add/collection
+  menu_name: obw_content_admin
+  weight: -79
+contentadminaddnewspotlight:
+  title: Add Spotlight
+  description: 'Add Spotlight'
+  url: internal:/node/add/spotlight
+  menu_name: obw_content_admin
+  weight: -78 
+#taxonomy management
+termcause:
+  title: Causes
+  description: 'Causes'
+  url: internal:/admin/structure/taxonomy/manage/story_category/overview
+  menu_name: taxo_management
+  weight: -90
+termcountry:
+  title: Countries
+  description: 'Countries'
+  url: internal:/admin/structure/taxonomy/manage/story_country/overview
+  menu_name: taxo_management
+  weight: -89
+termtopic:
+  title: Tags
+  description: 'Tags'
+  url: internal:/admin/structure/taxonomy/manage/story_topic/overview
+  menu_name: taxo_management
+  weight: -88
+#tracking management
+trackingstory:
+  title: Stories
+  description: 'Stories'
+  url: internal:/admin/tracking-story
+  menu_name: tracking_management
+  weight: -92
+trackingpage:
+  title: Pages
+  description: 'Pages'
+  url: internal:/admin/tracking-page
+  menu_name: tracking_management
+  weight: -91
+trackinglog:
+  title: Action log
+  description: 'Action log'
+  url: internal:/admin/action-log-tracking
+  menu_name: tracking_management
+  weight: -91
+#view_donation
+donationhome:
+  title: Home
+  description: 'Homepage '
+  url: internal:/
+  menu_name: obw_view_donation
+  weight: -100
+donationreport:
+  title: Donation report
+  description: 'Donation report'
+  url: internal:/admin/donation-supportus
+  menu_name: donation_report
+  weight: -91
+#Campaigns_admin
+wildlifecampaign:
+  title: Wildlife
+  description: 'Wildlife'
+  url: 'route:<nolink>'
+  menu_name: campaigns_admin
+wildlifecontent:
+  title: Wildlife Content
+  description: 'Wildlife Content'
+  url: internal:/admin/wildlife-content
+  parent: wildlifecampaign
+  weight: -100
+animaleslist:
+  title: Animals List
+  description: 'Animals list'
+  url: internal:/admin/animals-list
+  parent: wildlifecampaign
+  weight: -91
+regionslist:
+  title: Regions List
+  description: 'Regions list'
+  url: internal:/admin/regions-list
+  parent: wildlifecampaign
+  weight: -90
+taxreliefcampaign:
+  title: Tax Relief
+  description: 'Tax Relief'
+  url: 'route:<nolink>'
+  menu_name: campaigns_admin
+taxreliefresult:
+  title: Tax Relief result
+  description: 'Tax Relief result'
+  url: internal:/admin/structure/webform/manage/support_us_tax_form/results/submissions
+  parent: taxreliefcampaign
+  weight: -100
+taxreliefdonate:
+  title: Support Us form result
+  description: 'Support Us'
+  url: internal:/admin/structure/webform/manage/support_us/results/submissions
+  parent: taxreliefcampaign
+  weight: -91
+taxreliefpatch:
+  title: Tax Relief Data patch
+  description: 'Tax Relief Data patch'
+  url: internal:/admin/support-us/patch-tax-relief-key
+  parent: taxreliefcampaign
+  weight: -91  
+contrast_mode:
+  title: Contrast mode
+  parent: system.admin_config_system
+  route_name: obw_utilities.contrast_mode
+  weight: 10
+#Action_admin
+actionmenu:
+  title: Webform
+  description: 'Webform'
+  url: internal:/admin/structure/webform
+  menu_name: action_admin
+  weight: -100
+actionsubmenu1:
+  title: Call To Action
+  description: 'Call To Action'
+  url: internal:/admin/admin-call-to-actions
+  menu_name: action_admin
+  weight: -90

@@ -1,0 +1,23 @@
+obw-zoom:
+  version: 1.x
+  js:
+    js/react.min.js: {}
+    js/react-dom.min.js: {}
+    js/redux.min.js: {}
+    js/redux-thunk.min.js: {}
+    js/lodash.min.js: {}
+    js/zoom-meeting-2.5.0.min.js: {}
+    js/zoom-meeting-embedded-2.5.0.min.js: {}
+    js/tool.js: {}
+    js/vconsole.min.js: {}
+    js/meeting.js: {}
+  css:
+    theme:
+      css/bootstrap.css: {}
+      css/react-select.css: {}
+      css/zoom-jwt.css: {}
+
+obw-zoom-not-login:
+  css:
+    theme:
+      css/zoom-not-login.css: {}

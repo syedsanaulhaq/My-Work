@@ -1,0 +1,87 @@
+.hidden-field {
+  display: none !important
+}
+
+.role-writer #edit-body-wrapper .filter-help {
+  display: none
+}
+
+.role-writer #edit-body-wrapper select.filter-list option[value=html_no_editor],
+.role-writer #edit-body-wrapper select.filter-list option[value=restricted_html] {
+  display: none
+}
+
+.profile-settings .profile-photo .photo-wrap .js-form-type-managed-image .js-form-managed-file.file-selected:before {
+  display: none
+}
+
+form.error-float .ui.basic.red.label {
+  position: absolute;
+  z-index: 10;
+  right: 15px
+}
+
+form .js-form-item.error input,
+form .js-form-item.red-border.error,
+form .js-form-item input.error
+{
+  border: 1px solid red !important
+}
+
+form .js-form-item.error textarea,
+form .js-form-item.error-custom textarea {
+  border: 1px solid red !important
+}
+
+form .error .select2-selection {
+  border-color: red !important
+}
+
+form.user-login-form .prompt {
+  margin-bottom: 10px
+}
+
+form.obw-contributor-profile-reset-password-form .prompt {
+  margin-bottom: 10px !important;
+  margin-top: 0 !important
+}
+
+.js-form-type-checkbox.error label:after {
+  border: 1px solid red;
+  border-radius: 4px
+}
+
+.js-form-type-checkbox .prompt,
+.js-form-type-radio .prompt {
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important
+}
+
+form.semantic-form-validate .js-form-wrapper .js-form-type-radio.error label {
+  border: none !important
+}
+
+form.semantic-form-validate .js-form-wrapper .js-form-type-radio.error label:after {
+  border: 1px solid red;
+  border-radius: 10px
+}
+
+form._form {
+  display: none
+}
+
+.webform-submission-contact-us-add-form .text-count-message {
+  display: none !important
+}
+
+.g-recaptcha.error>div {
+  border: 1px solid red
+}
+
+.ui-dialog-content form.webform-submission-email-a-friend-form .form-actions {
+  margin-top: 1rem;
+}

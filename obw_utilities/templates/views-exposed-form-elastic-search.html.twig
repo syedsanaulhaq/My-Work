@@ -1,0 +1,20 @@
+{#
+/**
+ * @file
+ * Theme override for a 'form' element.
+ *
+ * Available variables
+ * - attributes: A list of HTML attributes for the wrapper element.
+ * - children: The child elements of the form.
+ *
+ * @see template_preprocess_form()
+ */
+#}
+<h3>{{ form.form_title }}</h3>
+<div class="result-content">
+	{{ form.summary }}
+</div>
+<div class="form-wrapper">
+    {{ form.keyword }}
+    {{ form.actions }}
+</div>

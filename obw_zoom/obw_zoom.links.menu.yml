@@ -1,0 +1,6 @@
+obw_zoom.talk_integration:
+  title: 'Zoom Form Config'
+  route_name: obw.talk_integration.config
+  description: 'Config for JWT key, Secret key, meeting number'
+  parent: system.admin_config_system
+  weight: 98

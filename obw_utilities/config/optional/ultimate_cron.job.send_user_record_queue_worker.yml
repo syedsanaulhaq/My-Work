@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies:
+  module:
+  - obw_utilities
+title: 'Send User Record Queue Worker'
+id: send_user_record_queue_worker
+module: obw_utilities
+callback: obw_utilities_send_user_record_queue_worker_cronjob

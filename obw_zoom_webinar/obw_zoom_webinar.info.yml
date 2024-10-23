@@ -1,0 +1,5 @@
+name: 'OBW Zoom Webinar'
+type: module
+description: 'Module to embed zoom in obw.'
+core_version_requirement: ^8 || ^9
+package: 'OBW'

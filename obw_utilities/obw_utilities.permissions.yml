@@ -1,0 +1,7 @@
+draw leaflet map:
+  title: 'User can draw leaflet map'
+  description: 'User can draw leaflet map'
+access node community blog add form:
+  title: 'User can create a blog post'
+access node community blog edit form:
+  title: 'User can edit a blog post'

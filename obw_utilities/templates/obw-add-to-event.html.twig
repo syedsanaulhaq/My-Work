@@ -1,0 +1,18 @@
+{#
+/**
+ * @file
+ * Profile ws custom block.
+ */
+#}
+
+<div title="" id="{{ id_event }}" class="addeventatc" style="visibility: visible; z-index: 100004;">
+    Add to Calendar
+    <span class="addeventatc_icon atc_node notranslate"></span>
+    <span id="{{ id_event }}-drop" class="addeventatc_dropdown" aria-hidden="false" aria-labelledby="{{ id_event }}">
+        <a class="ateappleical" id="{{ id_event }}-appleical" role="menuitem">Apple</a>
+        <a class="ategoogle" id="{{ id_event }}-google" target="_blank" role="menuitem">Google</a>
+        <a class="ateoutlook" id="{{ id_event }}-outlook" role="menuitem">Outlook</a>
+        <a class="ateoutlookcom" id="{{ id_event }}-outlookcom" target="_blank" role="menuitem">Outlook.com</a>
+        <a class="ateyahoo" id="{{ id_event }}-yahoo" target="_blank" role="menuitem">Yahoo</a>
+    </span>
+</div>

@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * @file
+ * Contains obw_zoom_webinar.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function obw_zoom_webinar_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the obw_zoom_webinar module.
+    case 'help.page.obw_zoom_webinar':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Module to embed zoom in obw.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function obw_zoom_webinar_theme() {
+  return [
+    'obw_zoom_webinar' => [
+      'render element' => 'children',
+    ],
+    'obw_zoom_join' => [
+      'render element' => 'children',
+    ],
+  ];
+}

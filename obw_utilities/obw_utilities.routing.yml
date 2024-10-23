@@ -1,0 +1,162 @@
+obw_utilities.static_page_controller_obw_345:
+  path: '/obw-345'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\StaticPageController::obw345'
+    _title: 'OBW 345'
+  requirements:
+    _permission: 'access content'
+
+obw_utilities.static_page_controller_obw_347:
+  path: '/obw-347'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\StaticPageController::obw347'
+    _title: 'OBW 347'
+  requirements:
+    _permission: 'access content'
+
+obw_utilities.static_page_controller_obw_330:
+  path: '/obw-330'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\StaticPageController::obw330'
+    _title: 'OBW 330'
+  requirements:
+    _permission: 'access content'
+
+obw_utilities.web_cal_generate_controller_generate:
+  path: '/webcal/{id}/{subject}/{date_start}/{date_end}/{detail}/{location}'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\WebCalGenerateController::generate'
+    _title: 'generate'
+  requirements:
+    _permission: 'access content'
+
+obw_utilities.rest_mh_quick_poll_result:
+  path: '/mh-quick-poll-result/{wf_id}'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\QuickPollController::getResult'
+    _title: 'Get MH Quick Pool Result'
+  methods: [ GET ]
+  requirements:
+    _access: 'TRUE'
+
+obw_utilities.wl2021.suggested_stories:
+  path: '/wl2021/suggest-story/node/{node_id}/public-year/{year}'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\StoryController::getSuggestedStories'
+    _title: 'Get Suggested Stories'
+  methods: [ GET ]
+  requirements:
+    _access: 'TRUE'
+
+obw_utilities.node.story_edit_primary_fields_form:
+  path: '/node/{node}/story_edit_primary_fields'
+  defaults:
+    _entity_form: 'node.story_edit_primary_fields'
+    _title: 'Edit Primary Fields Story'
+  requirements:
+    _permission: 'access custom edit primary fields story form'
+  options:
+    _admin_route: TRUE
+
+obw_utilities.node.edit_metatags_form:
+  path: '/node/{node}/edit_metatags'
+  defaults:
+    _entity_form: 'node.node_edit_metatags'
+    _title: 'Edit Node Metatags'
+  requirements:
+    _permission: 'access custom edit node metatags form'
+  options:
+    _admin_route: TRUE
+
+obw_utilities.youtube.config:
+  path: 'admin/config/obw/youtube'
+  defaults:
+    _form: '\Drupal\obw_utilities\Form\ObwYoutubeConfig'
+    _title: 'OBW Youtube Configuration'
+  requirements:
+    _permission: 'edit obw youtube config'
+
+obw_utilities.node_format.config:
+  path: 'admin/config/obw/node-format'
+  defaults:
+    _form: '\Drupal\obw_utilities\Form\ObwNodeFormatConfig'
+    _title: 'OBW Node Format Configuration'
+  requirements:
+    _permission: 'edit obw node format config'
+
+obw_utilities.wl_2021_dlcheck:
+  path: 'series/a-wild-life/story/{story_name}/download'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\WlDownloadController::dlCheck'
+    _title: 'wl dlcheck'
+  requirements:
+    _permission: 'access content'
+
+obw_utilities.wl_2021_fblg:
+  path: 'series/a-wild-life/story/{story_name}/download/fblg'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\WlDownloadController::fbCheck'
+    _title: 'wl dblg'
+  requirements:
+    _permission: 'access content'
+
+obw_utilities.node.add_new_blog_post:
+  path: '/node/add/blog'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\CommunityBlogController::addCommunityBlogForm'
+    _title: 'Add Community Blog Form'
+  requirements:
+    _permission: 'access node community blog add form'
+  options:
+    _admin_route: TRUE
+
+
+obw_utilities.node.edit_new_blog_post:
+  path: '/node/{node}/edit/blog'
+  defaults:
+    _entity_form: 'node.story_new_blog_post'
+    _title: 'Edit Community Blog Form'
+  requirements:
+    _permission: 'access node community blog edit form'
+  options:
+    _admin_route: TRUE
+
+obw_utilities.support_us_nric:
+  path: '/support-us-nric/{email}/{amount}'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\SupportUsController::init'
+    _title: 'Support Us NRIC APIs'
+  methods: [ GET ]
+  requirements:
+    _access: 'TRUE'
+
+obw_utilities.wl_suggested_countries.config:
+  path: 'admin/config/wl-suggested-countries'
+  defaults:
+    _form: '\Drupal\obw_utilities\Form\WLSuggestedCountriesForm'
+    _title: 'Wildlife WLSuggested Countries Configuration'
+  requirements:
+    _permission: 'edit wl suggested countries config'
+
+obw_utilities.contrast_mode:
+  path: '/admin/config/system/contrast-mode'
+  defaults:
+    _title: 'Contrast mode'
+    _form: 'Drupal\obw_utilities\Form\ContrastModeForm'
+  requirements:
+    _permission: 'administer site configuration'
+
+obw_utilities.export_missing_story_contributors:
+  path: '/admin/export-missing-story-contributors'
+  defaults:
+    _form: '\Drupal\obw_utilities\Form\ObwExportMissingStoryContributors'
+    _title: 'Obw Missing Story Contributors'
+  requirements:
+    _permission: 'administer site configuration'
+
+obw_utilities.export_missing_story_contributors_download:
+  path: '/admin/export-missing-story-contributors/download/{filename}'
+  defaults:
+    _controller: '\Drupal\obw_utilities\Controller\ObeExportMissingStoryDownload::index'
+  requirements:
+    _permission: 'administer site configuration'

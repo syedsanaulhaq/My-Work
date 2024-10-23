@@ -1,0 +1,260 @@
+#header.hidden {
+  display: none;
+}
+
+.btn {
+  font-size: 15px !important;
+  height: 40px !important;
+  padding: 0 20px !important;
+  border-radius: 0px !important;
+  color: #fff !important;
+  border: none !important;
+}
+.ax-outline-blue-important:focus {
+  outline: 0px solid #2d8cff !important;
+  outline-offset: 0px !important;
+}
+
+.page-zoom-login {
+  margin: 100px 0 90px 0;
+}
+.page-zoom-login h1 {
+  margin: 0;
+  color: #191919;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 36px;
+}
+.page-zoom-login #open-signup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 250ms ease;
+  border-radius: 4px;
+  background: #d24f1d;
+  height: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #fff;
+  max-width: 165px;
+  margin: 0 auto;
+  width: 100%;
+}
+#header .user-action .action-list ul li a {
+  font-size: 15px !important;
+}
+
+/* 
+
+.row {
+  display: flex;
+}
+
+.column {
+  flex: 1;
+  position: relative;
+  
+}
+
+#meetingSDKElement {
+  top: 59px !important;
+  left: 0 !important;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: 244px; 
+} */
+
+/* OBW-5514 Start */
+.participants-item__buttons div:not([attribute]) {
+  display: grid;
+  row-gap: 5px;
+}
+.participants-item__buttons button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+  background: #fff !important;
+  color: #000 !important;
+  border: 1px solid lightgray !important;
+  max-width: 155px !important;
+  min-width: 155px !important;
+  border-radius: 5px !important;
+  max-height: 35px !important;
+  font-size: 10px !important;
+  gap: 5px;
+  /*line-height:20px !important; */
+}
+.participants-item__buttons button:hover {
+  background: #d3d3d3ab !important;
+}
+.participants-item__buttons button:active,
+.participants-item__buttons button:focus,
+.participants-item__buttons button:visited {
+  /*     border: none !important; */
+  outline: none !important;
+  box-shadow: none !important;
+}
+.button-margin-right {
+  max-width: 50px;
+}
+.participants-section-container__participants-footer-bottom {
+  gap: 4px;
+}
+
+.chat-box__chat-textarea {
+  padding: 10px 10px !important;
+}
+
+.meeting-info-container__full-screen {
+  margin-top: 43px !important;
+}
+.meeting-client-inner{
+  height:  calc(100% - 106px) !important;
+  bottom: 0 !important;
+  top: 106px !important;
+  background-color: #000;
+}
+.av-preview-container {
+  display: none !important;
+}
+
+#__vconsole .vc-switch {
+  display: none !important;
+  visibility: hidden !important;
+}
+.controls{
+  text-align: center;
+}
+
+@media only screen and (min-width: 300px) {
+  #zmmtg-root {
+    zoom: 0.7;
+    height: 100vh;
+    background-color: #fff !important;    
+  } 
+  button.full-screen-widget,
+  .full-screen-widget__pop-menu.dropdown-menu .common-ui-component__dropdown-divider,
+  .full-screen-widget__pop-menu.dropdown-menu li a[aria-label="Fullscreen"],
+  .more-button__pop-menu.custom-dropdown-menu.dropdown-menu li a[aria-label="Settings"],
+  .footer-button__button[aria-label="Settings"],
+  .footer-button__button[aria-label="Raise Hand"],
+  .join-audio-container {
+    display: none !important;
+  }
+  #content_container{
+    width: 100% !important;
+    height: 100vh !important;
+  }
+  html,
+  body {
+    max-width: 100% !important;
+    min-width: auto !important;
+    overflow-x: hidden;
+  } 
+  .webinar-client-inner,
+  .join-dialog,
+  .meeting-app {
+    width: 100% !important;
+    height: 100% !important;
+    background-color: #000;
+  }
+  #wc-loading{      
+    height: 100vh !important;
+    text-align: center !important;
+    margin: 0 auto;
+    width: 100% !important;
+  }
+  .ReactModalPortal{
+    zoom: 0.6;
+  }
+  .full-screen-icon {
+    display: none;
+  }
+}
+@media only screen and (min-width: 600px) {
+  #zmmtg-root {
+    zoom: 0.8;
+    height: 100vh;
+    background-color: #fff !important;
+  }
+  #content_container{
+    width: 100% !important;
+    height: 100vh !important;
+  }
+  html,
+  body {
+    max-width: 100% !important;
+    min-width: auto !important;
+    overflow-x: hidden;
+  }
+  .webinar-client-inner,
+  .join-dialog,
+  .meeting-app {
+    width: 100% !important;
+    height: 100% !important;
+    background-color: #000;
+  }
+  .ReactModalPortal{
+    zoom: 0.8;
+  }
+  #wc-loading{     
+    height: 100vh !important;
+    text-align: center !important;
+    margin: 0 auto;
+    width: 100% !important;
+  }
+  .full-screen-icon {
+    display: none;
+  }
+}
+
+@media only screen and (min-width: 800px) {
+  #zmmtg-root {
+    zoom: 0.9;
+    height: 100vh;
+    background-color: #fff !important;
+  }
+  .ReactModalPortal{
+    zoom: 0.9;
+  }
+  #content_container{
+    width: 100% !important;
+    height: 100vh !important;
+  }
+  html,
+  body {
+    max-width: 100% !important;
+    min-width: auto !important;
+    overflow-x: hidden;
+  }
+  .webinar-client-inner,
+  .join-dialog,
+  .meeting-app {
+    width: 100% !important;    
+  }
+  #wc-loading{       
+    height: 100vh !important;
+    text-align: center !important;
+    margin: 0 auto;
+    width: 100% !important;
+  }
+  .full-screen-icon {
+    display: none;
+  }
+}
+
+@media only screen and (min-width: 1000px) {
+  #zmmtg-root {
+    zoom: 1;
+  }
+  .ReactModalPortal{
+    zoom: 1;
+  }
+  .full-screen-icon {
+    display: block;
+  }
+}
+/* OBW-5514 End */

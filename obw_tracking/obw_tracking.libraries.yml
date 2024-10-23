@@ -1,0 +1,52 @@
+global-tracking:
+  version: 1.x
+  js:
+    js/global-tracking.js: { }
+    js/login-signup.js: { }
+    js/subscription.js: { }
+  dependencies:
+    - obw_tracking/common
+    - core/jquery
+    - core/drupalSettings
+common:
+  version: 1.x
+  js:
+    js/common.js: { }
+series-gsoty:
+  version: 1.x
+  js:
+    js/series-gsoty.js: { }
+  dependencies:
+    - obw_tracking/common
+    - core/jquery
+    - core/drupalSettings
+story:
+  version: 1.x
+  js:
+    js/story.js: { }
+form:
+  version: 1.x
+  js:
+    js/form.js: { }
+choose-your-action:
+  version: 1.x
+  js:
+    js/choose-your-action.js: { }
+donate:
+  version: 1.x
+  js:
+    js/donate.js: { }
+action-in-profile:
+  version: 1.x
+  js:
+    js/action-in-profile.js: { }
+profile-view:
+  version: 1.x
+  js:
+    js/profile-view.js: { }
+filter:
+  js:
+    js/filter.js: { }
+    js/update-url.js: { }
+  dependencies:
+    - obw_tracking/common
